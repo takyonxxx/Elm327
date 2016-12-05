@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>  
+    <string-array name="EngineType">
+        <item name="1">Diesel Engine</item>     
+        <item name="2">Gasoline Engine</item>    
+    </string-array>    
+    <string-array name="EngineTypeValues">
+        <item name="1">0</item>   
+        <item name="2">1</item>      
+    </string-array>    
+     <string-array name="FaceColor">
+        <item name="0">Black</item>
+        <item name="1">Blue</item>
+        <item name="2">Red</item>
+        <item name="3">Green</item>
+        <item name="4">Yellow</item>
+    </string-array>    
+    <string-array name="FaceColorValues">
+        <item name="0">0</item>   
+        <item name="1">1</item>   
+        <item name="2">2</item>  
+        <item name="3">3</item>
+        <item name="4">4</item>
+    </string-array>
+    <string-array name="DedectPids">
+        <item name="0">No</item>
+        <item name="1">Yes</item>
+    </string-array>
+    <string-array name="DedectPidsValues">
+        <item name="0">0</item>
+        <item name="1">1</item>
+    </string-array>
+    <string-array name="TestPid">
+        <item name="0">Fuel consumption</item>     
+        <item name="1">Fuel system status</item>     
+        <item name="2">Fuel pressure</item>   
+        <item name="3">Intake manifold pressure</item>    
+        <item name="4">Intake air temperature</item>    
+        <item name="5">MAF air flow rate</item>     
+        <item name="6">Throttle position</item>   
+        <item name="7">Fuel Rail Pressure</item> 
+        <item name="8">Fuel Level Input</item>  
+        <item name="9">Engine oil temperature</item> 
+        <item name="10">Fuel injection timing</item> 
+        <item name="11">Engine fuel rate</item>              
+        <item name="12">Engine fault codes 03</item> 
+        <item name="13">Engine fault codes 07</item> 
+        <item name="14">Supported Pids</item> 
+    </string-array>    
+    <string-array name="TestPidValues">
+        <item name="0">FUELC</item> 
+        <item name="1">0103</item>   
+        <item name="2">010A</item>  
+        <item name="3">010B</item>  
+        <item name="4">010F</item>  
+        <item name="5">0110</item>   
+        <item name="6">0111</item>     
+        <item name="7">0123</item>  
+        <item name="8">012F</item>  
+        <item name="9">015C</item> 
+        <item name="10">015D</item>  
+        <item name="11">015E</item>    
+        <item name="12">03</item>  
+        <item name="13">07</item>  
+        <item name="14">0100</item>      
+    </string-array>   
+     <string-array name="ranges">
+        <item>16</item>
+        <item>25</item>
+        <item>40</item>
+        <item>200</item>
+    </string-array>
+    
+    <string-array name="rangeColors">
+        <item>#E7202B</item>
+        <item>#E86F21</item>
+        <item>#E8E721</item>
+        <item>#1BCA21</item>
+    </string-array>
+</resources>

@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.tbiliyor.obdelm327pro.MainActivity">
+
+    <item android:id="@+id/menu_connect_scan" android:title="@string/connect"/>
+    <item android:id="@+id/menu_reset" android:title="@string/reset"/>
+    <item android:id="@+id/menu_command" android:title="@string/command" />
+    <item android:id="@+id/menu_settings" android:title="@string/action_settings" />
+    <item android:id="@+id/menu_exit" android:title="@string/exit" />
+
+</menu>

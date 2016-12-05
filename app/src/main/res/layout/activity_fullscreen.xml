@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appbar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:theme="@style/AppTheme.AppBarOverlay">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="35sp"
+        android:background="?attr/colorPrimary"
+        app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    <RelativeLayout
+        android:id="@+id/mainscreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="0dp"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp"
+        android:paddingTop="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/background"
+        tools:context=".MainActivity" >
+
+        <com.obdelm327pro.GaugeSpeed
+            android:id="@+id/GaugeSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.obdelm327pro.GaugeRpm
+            android:id="@+id/GaugeRpm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+
+        <TextView
+            android:id="@+id/Status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Not Connected"
+            android:textColor="#EBDDE2"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"/>
+
+        <TextView
+            android:id="@+id/Load_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Status"
+            android:layout_toLeftOf="@+id/Load"
+            android:gravity="left"
+            android:text="Load: "
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Load"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Status"
+            android:layout_toLeftOf="@+id/Temp_text"
+            android:gravity="center"
+            android:text="0 %"
+            android:textColor="#99FFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Temp_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/Center_text"
+            android:layout_below="@+id/Status"
+            android:gravity="left"
+            android:text="  Temp:  "
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Center_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Status"
+            android:layout_centerHorizontal="true"
+            android:gravity="left"
+            android:text=" "
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/Center_text"
+            android:layout_below="@+id/Status"
+            android:gravity="center"
+            android:text="0 C°"
+            android:textColor="#99FFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Volt_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Status"
+            android:layout_toRightOf="@+id/Temp"
+            android:gravity="left"
+            android:text="  Volt: "
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Volt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Status"
+            android:layout_toRightOf="@+id/Volt_text"
+            android:gravity="center"
+            android:text="0 V"
+            android:textColor="#99FFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Airtemp_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/Fuel"
+            android:gravity="left"
+            android:text="Air Temp"
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:paddingLeft="5dp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Airtemp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Airtemp_text"
+            android:layout_alignParentLeft="true"
+            android:gravity="center"
+            android:text="0 C°"
+            android:textColor="#99FFFF"
+            android:textSize="14sp"
+            android:paddingLeft="5dp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Maf_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/Fuel"
+            android:gravity="left"
+            android:text="Maf Flow"
+            android:textColor="#aaa"
+            android:textSize="14sp"
+            android:paddingRight="5dp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Maf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/Maf_text"
+            android:layout_alignParentRight="true"
+            android:gravity="right"
+            android:text="0 g/s"
+            android:textColor="#99FFFF"
+            android:textSize="14sp"
+            android:paddingRight="5dp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/Fuel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:layout_below="@+id/Temp_text"
+            android:text="0 - 0 L/h"
+            android:textColor="#FFFF00"
+            android:textSize="18sp"
+            android:layout_marginTop="5dp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text=""
+            android:textColor="#FFFF00"
+            android:textSize="16sp"
+            android:layout_marginBottom="5dp"
+            android:layout_alignParentBottom="true"
+            android:textStyle="bold" />
+        <ListView
+            android:id="@+id/in"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/button_clearcodes"
+            android:layout_below="@+id/Status"
+            android:stackFromBottom="true"
+            android:textSize="8sp"
+            android:transcriptMode="alwaysScroll" />
+        <Button
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            style="?android:attr/buttonStyleSmall"
+            android:textSize="14sp"
+            android:text="Send Command" />
+
+        <Button
+            android:id="@+id/button_pids"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/button_send"
+            android:layout_alignLeft="@+id/button_send"
+            android:layout_alignParentRight="true"
+            android:textSize="14sp"
+            android:text="Available Pids" />
+        <Button
+            android:id="@+id/button_clearcodes"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignLeft="@+id/button_send"
+            android:layout_above="@+id/button_troublecodes"
+            android:textSize="14sp"
+            android:text="Clear Faults" />
+        <Button
+            android:id="@+id/button_clearlist"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignLeft="@+id/edit_text_out"
+            android:layout_alignRight="@+id/edit_text_out"
+            android:layout_above="@+id/button_troublecodes"
+            android:textSize="14sp"
+            android:text="Clear Cmd List" />
+        <Button
+            android:id="@+id/button_troublecodes"
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/edit_text_out"
+            android:layout_alignRight="@+id/edit_text_out"
+            android:layout_above="@+id/button_send"
+            android:layout_alignParentLeft="true"
+            android:textSize="14sp"
+            android:text="Fault Codes" />
+
+        <EditText
+            android:id="@+id/edit_text_out"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/button_send"
+            android:layout_alignBottom="@+id/button_send"
+            android:layout_alignParentLeft="true"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:layout_toLeftOf="@+id/button_send"/>
+
+    </RelativeLayout>
+
+</android.support.design.widget.AppBarLayout>

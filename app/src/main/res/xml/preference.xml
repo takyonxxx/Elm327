@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Engine Settings"
+        android:key="first_category">  
+        <EditTextPreference
+            android:summary="Define your Engine displacement"
+            android:defaultValue="1500"
+            android:title="Engine_displacement"           
+			android:inputType="number"
+			android:maxLength="4"
+            android:key="Enginedisplacement" 
+            android:name="Enginedisplacement"/>         
+		<ListPreference
+            android:key="EngineType"
+            android:name="EngineType"
+            android:title="Engine Type"
+            android:summary="Define Engine Type"
+            android:defaultValue="0"
+            android:entries="@array/EngineType"
+            android:entryValues="@array/EngineTypeValues" />   
+        <ListPreference
+            android:key="FaceColor"
+            android:name="FaceColor"
+            android:title="Face Color (Restart App)"
+            android:summary="Define Face Color"
+            android:defaultValue="0"
+            android:entries="@array/FaceColor"
+            android:entryValues="@array/FaceColorValues" />
+        <ListPreference
+            android:key="DedectPids"
+            android:name="DedectPids"
+            android:title="Dedect Pids"
+            android:summary="Dedect available pids automaticaly and search sensors. Enable Pids will be disabled."
+            android:defaultValue="0"
+            android:entries="@array/DedectPids"
+            android:entryValues="@array/DedectPidsValues" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Enable Specific Pids, Dedect Pids should be disabled."
+        android:key="enable_pids">
+        <CheckBoxPreference android:title="VOLTAGE"
+            android:defaultValue="true" android:summary="Pid : ATRV"
+            android:key="checkboxVOLTAGE" />
+        <CheckBoxPreference android:title="ENGINE_RPM"
+            android:defaultValue="true" android:summary="Pid : 010C"
+            android:key="checkboxENGINE_RPM" />
+        <CheckBoxPreference android:title="VEHICLE_SPEED"
+            android:defaultValue="true" android:summary="Pid : 010D"
+            android:key="checkboxVEHICLE_SPEED" />
+        <CheckBoxPreference android:title="ENGINE_LOAD"
+            android:defaultValue="true" android:summary="Pid : 0104"
+            android:key="checkboxENGINE_LOAD" />
+        <CheckBoxPreference android:title="ENGINE_COOLANT_TEMP"
+            android:defaultValue="true" android:summary="Pid : 0105"
+            android:key="checkboxENGINE_COOLANT_TEMP" />
+        <CheckBoxPreference android:title="INTAKE_AIR_TEMP"
+            android:defaultValue="true" android:summary="Pid : 010F"
+            android:key="checkboxINTAKE_AIR_TEMP" />
+        <CheckBoxPreference android:title="FUEL_RAIL_PRESSURE"
+            android:defaultValue="true" android:summary="Pid : 0122"
+            android:key="checkboxFUEL_RAIL_PRESSURE" />
+        <CheckBoxPreference android:title="ENGINE_OIL_TEMP"
+            android:defaultValue="true" android:summary="Pid : 015C"
+            android:key="checkboxENGINE_OIL_TEMP" />
+        <CheckBoxPreference android:title="INTAKE_MAN_PRESSURE"
+            android:defaultValue="true" android:summary="Pid : 010B"
+            android:key="checkboxINTAKE_MAN_PRESSURE" />
+        <CheckBoxPreference android:title="MAF_AIR_FLOW"
+            android:defaultValue="true" android:summary="Pid : 0110"
+            android:key="checkboxMAF_AIR_FLOW" />
+
+    </PreferenceCategory>
+</PreferenceScreen>

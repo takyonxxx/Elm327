@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- VERSION 1.0.10 -->
+<resources>
+    <!-- Color for the Base Dial -->
+    <color name="color_dial">#FF25383C</color>
+    <!-- Color for the Centre Point of the Dial -->
+    <color name="color_dial_centre">#FF347C17</color>
+    <!-- Color for the needle pointer#FFFF6666 -->
+    <color name="color_needle">#FFFFFF00</color>
+    <!-- Color for the Dial Ticks#FF6666FF-->
+    <color name="color_ticks">#FFE5E4E2</color>  
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color> 
+</resources>
