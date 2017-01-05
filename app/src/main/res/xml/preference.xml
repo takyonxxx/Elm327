@@ -5,7 +5,7 @@
         android:key="first_category">  
         <EditTextPreference
             android:summary="Define your Engine displacement"
-            android:defaultValue="1500"
+            android:defaultValue="1400"
             android:title="Engine_displacement"           
 			android:inputType="number"
 			android:maxLength="4"
@@ -32,7 +32,7 @@
             android:name="DedectPids"
             android:title="Dedect Pids"
             android:summary="Dedect available pids automaticaly and search sensors. Enable Pids will be disabled."
-            android:defaultValue="0"
+            android:defaultValue="1"
             android:entries="@array/DedectPids"
             android:entryValues="@array/DedectPidsValues" />
     </PreferenceCategory>

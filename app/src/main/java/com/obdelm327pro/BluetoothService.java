@@ -32,10 +32,10 @@ public class BluetoothService {
     private static final String NAME = "ObdElm327";
 
     // Unique UUID for this application
-    private static final UUID MY_UUID =
-        UUID.fromString("0001101-0000-1000-8000-00805F9B34FB");
-  
-        //INSECURE	"8ce255c0-200a-11e0-ac64-0800200c9a66"
+    private static final UUID MY_UUID = UUID.fromString("0001101-0000-1000-8000-00805F9B34FB");
+    //public static final UUID BluetoothSerialUuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+    //INSECURE	"8ce255c0-200a-11e0-ac64-0800200c9a66"
     	//SECURE	"fa87c0d0-afac-11de-8a39-0800200c9a66"
     	//SPP		"0001101-0000-1000-8000-00805F9B34FB"
 
@@ -276,8 +276,7 @@ public class BluetoothService {
                         case STATE_LISTEN:
                         case STATE_CONNECTING:
                             // Situation normal. Start the connected thread.
-                            connected(socket, socket.getRemoteDevice(),
-                                    mSocketType);
+                            connected(socket, socket.getRemoteDevice(),mSocketType);
                             break;
                         case STATE_NONE:
                         case STATE_CONNECTED:

@@ -45,10 +45,9 @@
             android:layout_height="wrap_content"
             android:text="Not Connected"
             android:textColor="#EBDDE2"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingTop="10sp"
             android:layout_alignParentRight="true"
             android:layout_alignParentLeft="true"/>
 
@@ -61,7 +60,7 @@
             android:gravity="left"
             android:text="Ld: "
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Load"
@@ -72,7 +71,7 @@
             android:gravity="center"
             android:text="0 %"
             android:textColor="#99FFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Temp_text"
@@ -83,7 +82,7 @@
             android:gravity="left"
             android:text="  Tmp:  "
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Center_text"
@@ -94,7 +93,7 @@
             android:gravity="left"
             android:text=" "
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Temp"
@@ -105,7 +104,7 @@
             android:gravity="center"
             android:text="0 C°"
             android:textColor="#99FFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Volt_text"
@@ -116,7 +115,7 @@
             android:gravity="left"
             android:text="  Volt: "
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Volt"
@@ -127,7 +126,7 @@
             android:gravity="center"
             android:text="0 V"
             android:textColor="#99FFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/Airtemp_text"
@@ -138,7 +137,7 @@
             android:gravity="left"
             android:text="Air Temp"
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:paddingLeft="5dp"
             android:textStyle="bold" />
         <TextView
@@ -150,7 +149,7 @@
             android:gravity="center"
             android:text="0 C°"
             android:textColor="#99FFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:paddingLeft="5dp"
             android:textStyle="bold" />
         <TextView
@@ -162,7 +161,7 @@
             android:gravity="left"
             android:text="Maf Flow"
             android:textColor="#aaa"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:paddingRight="5dp"
             android:textStyle="bold" />
         <TextView
@@ -174,7 +173,7 @@
             android:gravity="right"
             android:text="0 g/s"
             android:textColor="#99FFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:paddingRight="5dp"
             android:textStyle="bold" />
         <TextView
@@ -184,9 +183,9 @@
             android:layout_centerHorizontal="true"
             android:gravity="center"
             android:layout_below="@+id/Temp_text"
-            android:text="0 - 0 l/h"
+            android:text="0 - 0 L/h"
             android:textColor="#FFFF00"
-            android:textSize="14sp"
+            android:textSize="18sp"
             android:layout_marginTop="5dp"
             android:textStyle="bold" />
         <TextView
@@ -197,7 +196,7 @@
             android:gravity="center"
             android:text=""
             android:textColor="#FFFF00"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:layout_marginBottom="5dp"
             android:layout_alignParentBottom="true"
             android:textStyle="bold" />
@@ -209,7 +208,6 @@
             android:layout_below="@+id/Status"
             android:stackFromBottom="true"
             android:textSize="8sp"
-            android:textColor="#FFFFFF"
             android:transcriptMode="alwaysScroll" />
         <Button
             android:id="@+id/button_send"
@@ -266,14 +264,11 @@
 
         <EditText
             android:id="@+id/edit_text_out"
-            android:imeOptions="flagNoExtractUi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/button_send"
             android:layout_alignBottom="@+id/button_send"
             android:layout_alignParentLeft="true"
-            android:inputType="textShortMessage|textMultiLine"
-            android:maxLines="4"
             android:textSize="14sp"
             android:textColor="#FFFFFF"
             android:layout_toLeftOf="@+id/button_send"/>
