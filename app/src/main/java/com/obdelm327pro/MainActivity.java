@@ -1,5 +1,7 @@
 package com.obdelm327pro;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -7,21 +9,21 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.os.PowerManager;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -32,114 +34,59 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.os.Message;
-import android.os.Handler;
-
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.Thing;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.obdelm327pro.R;
-
 public class MainActivity extends AppCompatActivity {
 
-    enum RSP_ID
-    {
-        PROMPT    ( ">"           ),
-        OK        ( "OK"          ),
-        MODEL     ( "ELM"         ),
-        NODATA    ( "NODATA"      ),
-        SEARCH    ( "SEARCHING"   ),
-        ERROR     ( "ERROR"       ),
-        NOCONN    ( "UNABLE"      ),
-        NOCONN2   ( "NABLETO"     ),
-        CANERROR  ( "CANERROR"    ),
-        BUSBUSY   ( "BUSBUSY"     ),
-        BUSERROR  ( "BUSERROR"    ),
-        BUSINIERR ( "BUSINIT:ERR" ),
-        BUSINIERR2( "BUSINIT:BUS" ),
-        BUSINIERR3( "BUSINIT:...ERR" ),
-        FBERROR   ( "FBERROR"     ),
-        DATAERROR ( "DATAERROR"   ),
-        BUFFERFULL( "BUFFERFULL"  ),
-        STOPPED   ( "STOPPED"     ),
-        RXERROR   ( "<"           ),
-        QMARK     ( "?"           ),
-        UNKNOWN   ( ""            );
-        private String response;
+    public static final int MESSAGE_STATE_CHANGE = 1;
 
-        RSP_ID(String response)
-        {
-            this.response = response;
-        }
-
-        @Override
-        public String toString()
-        {
-            return response;
-        }
-    }
-
-    private PowerManager.WakeLock wl;
-    private Menu menu;
-    MenuItem itemtemp;
-    private EditText mOutEditText;
-    private Button mSendButton, mPidsButton, mTroublecodes, mClearTroublecodes, mClearlist;
-    private ListView mConversationView;
-    private TextView Load, Fuel, Volt, Temp, Status, Loadtext, Volttext, Temptext, Centertext, Info, Airtemp_text, Airtemp, Maf_text, Maf;
-    private String mConnectedDeviceName = null;
-
-    GaugeSpeed speed;
-    GaugeRpm rpm;
-
-    BluetoothDevice currentdevice;
-    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false;
-
-    String devicename, deviceprotocol, lastsend, tmpmsg;
-
-    private int rpmval = 0, currenttemp = 0, intakeairtemp = 0, contmodulevolt = 0, ambientairtemp = 0,
-            engineoiltemp = 0, b1s1temp = 0, Enginetype = 0, FaceColor = 0,
-            whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0;
-    private double  Enginedisplacement = 1500;
-
-
-    // Local Bluetooth adapter
-    private BluetoothAdapter mBluetoothAdapter = null;
-    // Member object for the chat services
-    private BluetoothService mChatService = null;
-
-    final List<String> commandslist = new ArrayList<String>();
-    final List<Double> avgconsumption = new ArrayList<Double>();
-
-    //String[] commandslist;
-    String[] initializeCommands;
-
+    /*0	Automatic protocol detection
+   1	SAE J1850 PWM (41.6 kbaud)
+   2	SAE J1850 VPW (10.4 kbaud)
+   3	ISO 9141-2 (5 baud init, 10.4 kbaud)
+   4	ISO 14230-4 KWP (5 baud init, 10.4 kbaud)
+   5	ISO 14230-4 KWP (fast init, 10.4 kbaud)
+   6	ISO 15765-4 CAN (11 bit ID, 500 kbaud)
+   7	ISO 15765-4 CAN (29 bit ID, 500 kbaud)
+   8	ISO 15765-4 CAN (11 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo
+   9	ISO 15765-4 CAN (29 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo*/
+    public static final int MESSAGE_READ = 2;
+    public static final int MESSAGE_WRITE = 3;
+    public static final int MESSAGE_DEVICE_NAME = 4;
+    public static final int MESSAGE_TOAST = 5;
+    // Key names received from the BluetoothChatService Handler
+    public static final String DEVICE_NAME = "device_name";
+    public static final String TOAST = "toast";
     private static final String[] PIDS = {
             "01", "02", "03", "04", "05", "06", "07", "08",
             "09", "0A", "0B", "0C", "0D", "0E", "0F", "10",
             "11", "12", "13", "14", "15", "16", "17", "18",
             "19", "1A", "1B", "1C", "1D", "1E", "1F", "20"};
-
-    public static final int MESSAGE_STATE_CHANGE = 1;
-    public static final int MESSAGE_READ = 2;
-    public static final int MESSAGE_WRITE = 3;
-    public static final int MESSAGE_DEVICE_NAME = 4;
-    public static final int MESSAGE_TOAST = 5;
-
-    // Key names received from the BluetoothChatService Handler
-    public static final String DEVICE_NAME = "device_name";
-    public static final String TOAST = "toast";
-
-    // String buffer for outgoing messages
-    private StringBuffer mOutStringBuffer;
-
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
-
+    private static final float APPBAR_ELEVATION = 14f;
+    private static boolean actionbar = true;
+    final List<String> commandslist = new ArrayList<String>();
+    final List<Double> avgconsumption = new ArrayList<Double>();
+    MenuItem itemtemp;
+    ;
+    GaugeSpeed speed;
+    GaugeRpm rpm;
+    BluetoothDevice currentdevice;
+    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false, ecuok = false;
+    String devicename = null, deviceprotocol = null, lastsend = null;
+    String[] tryCommands;
+    String[] initializeCommands;
     Intent serverIntent = null;
+
+    TroubleCodes troubleCodes;
+
+    protected final static char[] dtcLetters = {'P', 'C', 'B', 'U'};
+    protected final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    final List<String> troubleCodesArray = new ArrayList<String>();
 
     String VOLTAGE = "ATRV",
             PROTOCOL = "ATDP",
@@ -159,24 +106,150 @@ public class MainActivity extends AppCompatActivity {
             THROTTLE_POSITION = "0111", //Throttle position 0 -100 % A*100/255
             OBD_STANDARDS = "011C", //OBD standards this vehicle
             PIDS_SUPPORTED = "0120"; //PIDs supported
-
-    /*PIDS_SUPPORTED: For example, if the car response is BE1FA813, it can be decoded like this:
-    Hexadecimal 	B 	E 	1 	F 	A 	8 	1 	3
-    Binary 	1 	0 	1 	1 	1 	1 	1 	0 	0 	0 	0 	1 	1 	1 	1 	1 	1 	0 	1 	0 	1 	0 	0 	0 	0 	0 	0 	1 	0 	0 	1 	1
-    Supported? 	Yes 	No 	Yes 	Yes 	Yes 	Yes 	Yes 	No 	No 	No 	No 	Yes 	Yes 	Yes 	Yes 	Yes 	Yes 	No 	Yes 	No 	Yes 	No 	No 	No 	No 	No 	No 	Yes 	No 	No 	Yes 	Yes
-    PID number 	01 	02 	03 	04 	05 	06 	07 	08 	09 	0A 	0B 	0C 	0D 	0E 	0F 	10 	11 	12 	13 	14 	15 	16 	17 	18 	19 	1A 	1B 	1C 	1D 	1E 	1F 	20
-
-    So, supported PIDs are: 01, 03, 04, 05, 06, 07, 0C, 0D, 0E, 0F, 10, 11, 13, 15, 1C, 1F and 20*/
-
-    // Array adapter for the conversation thread
-    private ArrayAdapter<String> mConversationArrayAdapter;
-
-    private static boolean actionbar = true;
-
-    private static final float APPBAR_ELEVATION = 14f;
-
     Toolbar toolbar;
     AppBarLayout appbar;
+    private PowerManager.WakeLock wl;
+    private Menu menu;
+    private EditText mOutEditText;
+    private Button mSendButton, mPidsButton, mTroublecodes, mClearTroublecodes, mClearlist;
+    private ListView mConversationView;
+    private TextView Load, Fuel, Volt, Temp, Status, Loadtext, Volttext, Temptext, Centertext, Info, Airtemp_text, Airtemp, Maf_text, Maf;
+    private String mConnectedDeviceName = "Ecu";
+    private int rpmval = 0, currenttemp = 0, intakeairtemp = 0, contmodulevolt = 0, ambientairtemp = 0,
+            engineoiltemp = 0, b1s1temp = 0, Enginetype = 0, FaceColor = 0,
+            whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0, ecutrycount = 0;
+    private double Enginedisplacement = 1500;
+
+    // Local Bluetooth adapter
+    private BluetoothAdapter mBluetoothAdapter = null;
+    // Member object for the chat services
+    private BluetoothService mChatService = null;
+    // String buffer for outgoing messages
+    private StringBuffer mOutStringBuffer;
+    // Array adapter for the conversation thread
+    private ArrayAdapter<String> mConversationArrayAdapter;
+    // The Handler that gets information back from the BluetoothChatService
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+
+                    switch (msg.arg1) {
+                        case BluetoothService.STATE_CONNECTED:
+
+                            Status.setText(getString(R.string.title_connected_to, mConnectedDeviceName));
+                            Info.setText("Connected.");
+                            try {
+                                itemtemp = menu.findItem(R.id.menu_connect_scan);
+                                itemtemp.setTitle("Disconnect");
+                            } catch (Exception e) {
+                            }
+
+                            avgconsumption.clear();
+                            tryconnect = false;
+                            resetvalues();
+
+                            sendEcuMessage("ATZ");
+
+                            break;
+                        case BluetoothService.STATE_CONNECTING:
+                            Status.setText(R.string.title_connecting);
+                            Info.setText("Trying to connect.");
+                            break;
+                        case BluetoothService.STATE_LISTEN:
+
+                        case BluetoothService.STATE_NONE:
+
+                            Status.setText(R.string.title_not_connected);
+
+                            itemtemp = menu.findItem(R.id.menu_connect_scan);
+                            itemtemp.setTitle("Connect");
+
+                            if (tryconnect) {
+                                mChatService.connect(currentdevice);
+                                connectcount++;
+                                if (connectcount >= 2) {
+                                    tryconnect = false;
+                                }
+                            }
+
+                            resetvalues();
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE:
+
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    String writeMessage = new String(writeBuf);
+
+                    if(commandmode || !initialized)
+                    {
+                        mConversationArrayAdapter.add("Command:  " + writeMessage);
+                    }
+
+                    break;
+                case MESSAGE_READ:
+
+                    String tmpmsg = clearMsg(msg);
+
+                    if(commandmode || !initialized)
+                    {
+                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
+                    }
+
+                    if (!ecuok) {
+                        checkEcuConnection(tmpmsg);
+                        return;
+                    }
+
+                    analysMsg(msg);
+
+                    break;
+                case MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+                    break;
+                case MESSAGE_TOAST:
+                    Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
+                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    };
+    // The action listener for the EditText widget, to listen for the return key
+    private TextView.OnEditorActionListener mWriteListener =
+            new TextView.OnEditorActionListener() {
+                public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
+                    // If the action is a key-up event on the return key, send the message
+                    if (actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_UP) {
+                        String message = view.getText().toString();
+                        sendEcuMessage(message);
+                    }
+                    return true;
+                }
+            };
+
+    public static boolean isHexadecimal(String text) {
+        text = text.trim();
+
+        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+        int hexDigitsCount = 0;
+
+        for (char symbol : text.toCharArray()) {
+            for (char hexDigit : hexDigits) {
+                if (symbol == hexDigit) {
+                    hexDigitsCount++;
+                    break;
+                }
+            }
+        }
+
+        return true ? hexDigitsCount == text.length() : false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,6 +299,8 @@ public class MainActivity extends AppCompatActivity {
         mTroublecodes = (Button) findViewById(R.id.button_troublecodes);
         mConversationView = (ListView) findViewById(R.id.in);
 
+        troubleCodes = new TroubleCodes();
+
         invisiblecmd();
 
         //ATZ reset all
@@ -238,10 +313,13 @@ public class MainActivity extends AppCompatActivity {
         //ATH1-0 Headers On - Headers Off
         //ATS1-0 printing of Spaces On - printing of Spaces Off
         //ATAL Allow Long (>7 byte) messages
+        //ATRD Read the stored data
+        //ATSTFF Set time out to maximum
+        //ATSTHH Set timeout to 4ms
 
-        initializeCommands = new String[]{"ATZ", "ATE0","ATL0", "ATRD", "ATH0", "ATAT1", "ATSTFF", "ATDP", "ATSP0","ATRV"};
-        //initializeCommands = new String[]{"ATZ", "ATRD", "ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATSP","0100","ATDP","0100","0120","020000","022000","0902","ATRV"};
-        //initializeCommands = new String[]{"ATZ","ATDP","ATS0","ATL0","ATAT0","ATST10","ATSPA0","ATE0"};
+        tryCommands = new String[]{"ATZ", "ATZ", "ATL0", "ATRD", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
+
+        initializeCommands = new String[]{"ATI", "ATDP", "0100"};
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -295,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
 
         mTroublecodes.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+
                 String troubleCodes = "03";
                 sendEcuMessage(troubleCodes);
             }
@@ -320,12 +399,10 @@ public class MainActivity extends AppCompatActivity {
                         //toolbar.setVisibility(View.VISIBLE);
                         actionBar.show();
                         actionbar = true;
-
-                        lp.setMargins(0, Integer.parseInt("?android:attr/actionBarSize"), 0, 0);
+                        lp.setMargins(0, 0, 0, 0);
                     }
 
                     setgaugesize();
-
                     Status.setLayoutParams(lp);
 
                 } catch (Exception e) {
@@ -355,7 +432,6 @@ public class MainActivity extends AppCompatActivity {
         }).start();
 
         getPreferences();
-
     }
 
     @Override
@@ -382,13 +458,10 @@ public class MainActivity extends AppCompatActivity {
                     if (mChatService != null) mChatService.stop();
                     item.setTitle("Connect");
                     Status.setText("Not Connected");
-                    resetvalues();
                 }
 
                 return true;
             case R.id.menu_command:
-
-                //mConversationArrayAdapter.clear();
 
                 if (item.getTitle().equals("Terminal")) {
                     commandmode = true;
@@ -398,7 +471,6 @@ public class MainActivity extends AppCompatActivity {
                     invisiblecmd();
                     item.setTitle("Terminal");
                     commandmode = false;
-                    resetvalues();
                 }
                 return true;
 
@@ -414,9 +486,8 @@ public class MainActivity extends AppCompatActivity {
 
                 return true;
             case R.id.menu_reset:
-
                 resetvalues();
-
+                sendEcuMessage(VOLTAGE);
                 return true;
         }
 
@@ -471,28 +542,14 @@ public class MainActivity extends AppCompatActivity {
         wl.release();
     }
 
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Elm327") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
-
     @Override
     public void onStart() {
         super.onStart();
         getPreferences();
         setDefaultOrientation();
-
-        if (initialized) {
-            //resetvalues();
-        }
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     @Override
     public void onStop() {
@@ -532,7 +589,7 @@ public class MainActivity extends AppCompatActivity {
                 invisiblecmd();
                 MenuItem item = menu.findItem(R.id.menu_command);
                 item.setTitle("Terminal");
-                resetvalues();
+                sendEcuMessage(VOLTAGE);
             }
 
             return false;
@@ -540,22 +597,6 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onKeyDown(keyCode, event);
     }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    // The action listener for the EditText widget, to listen for the return key
-    private TextView.OnEditorActionListener mWriteListener =
-            new TextView.OnEditorActionListener() {
-                public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
-                    // If the action is a key-up event on the return key, send the message
-                    if (actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_UP) {
-                        String message = view.getText().toString();
-                        sendEcuMessage(message);
-                    }
-                    return true;
-                }
-            };
-
 
     private void exit() {
         if (mChatService != null) mChatService.stop();
@@ -672,9 +713,6 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindow().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
-        //int densityDpi = displayMetrics.densityDpi;
-        //Status.setText(String.valueOf(densityDpi));
-
         Status.setTextSize(sttxtsize);
         Fuel.setTextSize(txtsize + 2);
         Temp.setTextSize(txtsize);
@@ -756,7 +794,7 @@ public class MainActivity extends AppCompatActivity {
             lp.setMargins(0, 0, 75, 0);
             rpm.setLayoutParams(lp);
             rpm.getLayoutParams().height = height;
-            rpm.getLayoutParams().width = (int) (width - 170) / 2 ;
+            rpm.getLayoutParams().width = (int) (width - 150) / 2;
 
             lp = new RelativeLayout.LayoutParams(height, height);
             lp.addRule(RelativeLayout.BELOW, findViewById(R.id.Load).getId());
@@ -764,7 +802,7 @@ public class MainActivity extends AppCompatActivity {
             lp.setMargins(75, 0, 0, 0);
             speed.setLayoutParams(lp);
             speed.getLayoutParams().height = height;
-            speed.getLayoutParams().width = (int) (width - 170) / 2 ;
+            speed.getLayoutParams().width = (int) (width - 150) / 2;
 
         } else if (width < height) {
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(width, width);
@@ -773,7 +811,7 @@ public class MainActivity extends AppCompatActivity {
             lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
             lp.setMargins(25, 5, 25, 5);
             speed.setLayoutParams(lp);
-            speed.getLayoutParams().width = (int) (width - 50) ;
+            speed.getLayoutParams().width = (int) (width - 50);
 
             lp = new RelativeLayout.LayoutParams(width, width);
             lp.addRule(RelativeLayout.BELOW, findViewById(R.id.GaugeSpeed).getId());
@@ -781,21 +819,13 @@ public class MainActivity extends AppCompatActivity {
             lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
             lp.setMargins(25, 5, 25, 5);
             rpm.setLayoutParams(lp);
-            rpm.getLayoutParams().width = (int) (width - 50) ;
+            rpm.getLayoutParams().width = (int) (width - 50);
         }
     }
 
     public void resetvalues() {
-        Load.setText("0 %");
-        Volt.setText("0 V");
-        Temp.setText("0 C°");
-        Info.setText("");
-        Airtemp.setText("0 C°");
-        Maf.setText("0 g/s");
-        initialized = false;
-        m_getPids = false;
-        whichCommand = 0;
-        trycount = 0;
+
+        resetItems();
 
         speed.setTargetValue(220);
         rpm.setTargetValue(80);
@@ -817,8 +847,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }).start();
-
-        sendEcuMessage("ATZ");
     }
 
     private void connectDevice(Intent data) {
@@ -870,13 +898,84 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void sendTryCommands() {
+        if (tryCommands.length != 0) {
+
+            if (whichCommand < 0) {
+                whichCommand = 0;
+            }
+
+            String send = tryCommands[whichCommand];
+            sendEcuMessage(send);
+
+            if (whichCommand == tryCommands.length - 1) {
+                whichCommand = -1;
+            } else {
+                whichCommand++;
+            }
+            Info.setText(send);
+        }
+    }
+
+    private void sendInitCommands() {
+        if (initializeCommands.length != 0) {
+
+            if (whichCommand < 0) {
+                whichCommand = 0;
+            }
+
+            String send = initializeCommands[whichCommand];
+            sendEcuMessage(send);
+
+            if (whichCommand == initializeCommands.length - 1) {
+                initialized = true;
+                whichCommand = -1;
+                sendDefaultCommands();
+            } else {
+                whichCommand++;
+            }
+
+            Info.setText(send);
+        }
+    }
+
+    private void sendDefaultCommands() {
+
+        try {
+            if (commandslist.size() != 0) {
+
+                if (whichCommand < 0) {
+                    whichCommand = 0;
+                }
+
+                String send = commandslist.get(whichCommand);
+                sendEcuMessage(send);
+
+                if (whichCommand >= commandslist.size() - 1) {
+                    whichCommand = 0;
+                } else {
+                    whichCommand++;
+                }
+            }
+        }
+        catch(Exception e)
+        {
+            sendEcuMessage(VOLTAGE);
+        }
+    }
+
+
     private char firstChar(int hex) {
-        int b =  hex / 4;
+        int b = hex / 4;
         switch (b) {
-            case 0: return 'P';
-            case 1: return 'C';
-            case 2: return 'B';
-            case 3: return 'U';
+            case 0:
+                return 'P';
+            case 1:
+                return 'C';
+            case 2:
+                return 'B';
+            case 3:
+                return 'U';
         }
         throw new IllegalArgumentException();
     }
@@ -884,126 +983,93 @@ public class MainActivity extends AppCompatActivity {
     private char secondChar(int hex) {
         int b = hex % 4;
         switch (b) {
-            case 0: return '0';
-            case 1: return '1';
-            case 2: return '2';
-            case 3: return '3';
+            case 0:
+                return '0';
+            case 1:
+                return '1';
+            case 2:
+                return '2';
+            case 3:
+                return '3';
         }
         throw new IllegalArgumentException();
     }
 
-    // The Handler that gets information back from the BluetoothChatService
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
+    private void checkEcuConnection(String tmpmsg) {
 
-            switch (msg.what) {
-                case MESSAGE_STATE_CHANGE:
+        Info.setText(tmpmsg);
 
-                    switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
+        getElmInfo(tmpmsg);
 
-                            Status.setText(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            Info.setText("Connected.");
-                            sendEcuMessage("ATZ");
-
-                            try {
-                                itemtemp = menu.findItem(R.id.menu_connect_scan);
-                                itemtemp.setTitle("Disconnect");
-                            }catch (Exception e)
-                            {
-                            }
-                            avgconsumption.clear();
-                            Fuel.setText("0 - 0 l/h");
-                            m_getPids = false;
-                            speed.setTargetValue(0);
-                            rpm.setTargetValue(0);
-                            mConversationArrayAdapter.clear();
-                            tryconnect = false;
-
-                            break;
-                        case BluetoothService.STATE_CONNECTING:
-                            Status.setText(R.string.title_connecting);
-                            Info.setText("Trying to connect.");
-                            break;
-                        case BluetoothService.STATE_LISTEN:
-
-                        case BluetoothService.STATE_NONE:
-
-                            Status.setText(R.string.title_not_connected);
-
-                            itemtemp = menu.findItem(R.id.menu_connect_scan);
-                            itemtemp.setTitle("Connect");
-
-                            avgconsumption.clear();
-                            Fuel.setText("0 - 0 l/h");
-                            m_getPids = false;
-
-                            if (tryconnect) {
-                                mChatService.connect(currentdevice);
-                                connectcount++;
-                                if (connectcount >= 2) {
-                                    tryconnect = false;
-                                }
-                            }
-
-                            resetvalues();
-                            break;
-                    }
-                    break;
-                case MESSAGE_WRITE:
-
-                    if (!initialized) {
-                        if (whichCommand == initializeCommands.length - 1) {
-                            initialized = true;
-                            whichCommand = 0;
-                        } else {
-                            whichCommand++;
-                        }
-                    } else {
-                        if (whichCommand >= commandslist.size() - 1) {
-                            whichCommand = 0;
-                        } else {
-                            whichCommand++;
-                        }
-                    }
-
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    String writeMessage = new String(writeBuf);
-
-                    mConversationArrayAdapter.add("Command:  " + writeMessage);
-
-                    break;
-                case MESSAGE_READ:
-
-                    analysMsg(msg);
-
-                    break;
-                case MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                    break;
-                case MESSAGE_TOAST:
-                    Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
-                            Toast.LENGTH_SHORT).show();
-                    break;
+        if (tmpmsg.contains("0100")) {
+            if (isHexadecimal(tmpmsg)) {
+                ecuok = true;
+                Toast.makeText(this, RSP_ID.CONNECTED.response, Toast.LENGTH_LONG).show();
+                sendInitCommands();
+                return;
             }
-        }
-    };
 
-    private void analysMsg(Message msg)
-    {
-        tmpmsg = msg.obj.toString();
+            if (tmpmsg.contains(RSP_ID.NOCONN.response)
+                    || tmpmsg.contains(RSP_ID.NOCONN2.response)
+                    || tmpmsg.contains(RSP_ID.ERROR.response)
+                    || tmpmsg.contains(RSP_ID.NODATA.response)
+                    || tmpmsg.contains(RSP_ID.BUSY.response)
+                    || tmpmsg.contains(RSP_ID.QMARK.response)
+                    || tmpmsg.contains(RSP_ID.STOPPED.response)
+                    || tmpmsg.contains(RSP_ID.BUS.response)
+                    || tmpmsg.contains(RSP_ID.OK.response)
+                    || tmpmsg.contains(RSP_ID.UNKNOWN.response)
+                    ) {
+                ecuok = false;
+                if (ecutrycount < 2) {
+                    sendEcuMessage("0100");
+                    ecutrycount++;
+                    return;
+                } else {
+                    ecutrycount = 0;
+                    sendTryCommands();
+                }
+            }
+        } else {
+            sendTryCommands();
+        }
+    }
+
+    private String clearMsg(Message msg) {
+        String tmpmsg = msg.obj.toString();
 
         tmpmsg = tmpmsg.replace("null", "");
         tmpmsg = tmpmsg.replaceAll("\\s", ""); //removes all [ \t\n\x0B\f\r]
         tmpmsg = tmpmsg.replaceAll(">", "");
         tmpmsg = tmpmsg.replaceAll("SEARCHING...", "");
+        tmpmsg = tmpmsg.replaceAll("ATZ", "");
+        tmpmsg = tmpmsg.replaceAll("ATI", "");
+        tmpmsg = tmpmsg.replaceAll("atz", "");
+        tmpmsg = tmpmsg.replaceAll("ati", "");
+        tmpmsg = tmpmsg.replaceAll("ATDP", "");
+        tmpmsg = tmpmsg.replaceAll("atdp", "");
+        tmpmsg = tmpmsg.replaceAll("ATRV", "");
+        tmpmsg = tmpmsg.replaceAll("atrv", "");
 
-        mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
+        return tmpmsg;
+    }
 
-        if (tmpmsg.indexOf("41") != -1)
-        {
+    private void resetItems() {
+        Load.setText("0 %");
+        Volt.setText("0 V");
+        Temp.setText("0 C°");
+        Info.setText("");
+        Airtemp.setText("0 C°");
+        Maf.setText("0 g/s");
+        Fuel.setText("0 - 0 l/h");
+        initialized = false;
+        m_getPids = false;
+        whichCommand = -1;
+        trycount = 0;
+    }
+
+    private void checkPids(String tmpmsg) {
+        if (tmpmsg.indexOf("41") != -1) {
             int index = tmpmsg.indexOf("41");
 
             String pidmsg = tmpmsg.substring(index, tmpmsg.length());
@@ -1014,54 +1080,53 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
+    }
+
+    private void analysMsg(Message msg) {
+        String tmpmsg = clearMsg(msg);
 
         generateVolt(tmpmsg);
 
         if (!initialized) {
 
-            getElmInfo(msg);
+            getElmInfo(tmpmsg);
+
+            sendInitCommands();
 
         } else {
 
-            if (commandmode) {
+            checkPids(tmpmsg);
 
-                getCommandInfo(msg);
+            if (!m_getPids && m_dedectPids == 1) {
+                String sPIDs = "0100";
+                sendEcuMessage(sPIDs);
+                return;
+            }
 
-            } else {
+            if(commandmode)
+            {
+                getFaultInfo(tmpmsg);
 
-                checkSendMsg(msg);
+                return;
             }
 
             compileMessage(tmpmsg);
+
+            checkData(tmpmsg);
+
+            sendDefaultCommands();
         }
     }
 
-    private void checkSendMsg(Message msg)
-    {
-        String tmpmsg = msg.obj.toString();
-
-        tmpmsg = tmpmsg.replace("null", "");
-        tmpmsg = tmpmsg.replaceAll("\\s", ""); //removes all [ \t\n\x0B\f\r]
-        tmpmsg = tmpmsg.replaceAll(">", "");
-        tmpmsg = tmpmsg.replaceAll("SEARCHING...", "");
-
-        if (!m_getPids && m_dedectPids == 1 && !commandmode) {
-            String sPIDs = "0100";
-            sendEcuMessage(sPIDs);
-            return;
-        }
-
-        if (commandslist.size() != 0) {
-            String send = commandslist.get(whichCommand);
-            sendEcuMessage(send);
-        }
-
+    private void checkData(String tmpmsg) {
         try {
+
             if (whichCommand != 0) {
 
                 lastsend = commandslist.get(whichCommand - 1);
 
                 Info.setText(lastsend + " : " + tmpmsg);
+
                 if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
                     commandslist.remove(whichCommand - 1);
                     Info.setText("Removing pid: " + lastsend);
@@ -1072,6 +1137,7 @@ public class MainActivity extends AppCompatActivity {
                 lastsend = commandslist.get(commandslist.size() - 1);
 
                 Info.setText(lastsend + " : " + tmpmsg);
+
                 if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
                     commandslist.remove(commandslist.size() - 1);
                     Info.setText("Removing pid: " + lastsend);
@@ -1081,124 +1147,138 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
         }
     }
+    //getFaultInfo("0387F1104300000000000000")
 
-    private void getCommandInfo(Message msg)
-    {
-        String tmpmsg = msg.obj.toString();
-
-        tmpmsg = tmpmsg.replace("null", "");
-        tmpmsg = tmpmsg.replaceAll("\\s", ""); //removes all [ \t\n\x0B\f\r]
-        tmpmsg = tmpmsg.replaceAll(">", "");
-        tmpmsg = tmpmsg.replaceAll("SEARCHING...", "");
+    private void getFaultInfo(String tmpmsg) {
 
         int index = tmpmsg.indexOf("43");
 
-        if(index != -1) {
+        if (index != -1) {
+
             tmpmsg = tmpmsg.substring(index, tmpmsg.length());
+
             if (tmpmsg.substring(0, 2).equals("43")) {
 
-                String errorCode = "no error";
+                performCalculations(tmpmsg);
 
+                String faultCode = null;
+                String faultDesc = null;
 
-                final String[] lines = msg.obj.toString().split("\n+");
-                final List<String> result = new ArrayList<>();
+                if(troubleCodesArray.size() > 0)
+                {
+                    for (int i = 0; i < troubleCodesArray.size(); i++)
+                    {
+                        faultCode = troubleCodesArray.get(i);
+                        faultDesc  = troubleCodes.getFaultCode(faultCode);
 
-                for (String line : lines) {
-                    line = line.replace("null", "");
-                    line = line.replaceAll("\\s", ""); //removes all [ \t\n\x0B\f\r]
-                    line = line.replaceAll(">", "");
-                    //mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCodes:\n" + line);
-                    for (int i = 2, len = line.length(); i < len; i += 4) {
-
-                        final String head = line.substring(i, i + 1);
-                        final String tail = line.substring(i + 1, i + 4);
-
-                        if ("000".equals(tail)) {
-                            mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCodes:\n" + errorCode);
-                            continue;
+                        if(faultCode != null && faultDesc != null)
+                        {
+                            mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode + "\n" + faultDesc);
                         }
-                        final int first = Integer.parseInt(head, 16);
-                        final char firstChar = firstChar(first);
-                        final char secondChar = secondChar(first);
-                        errorCode = String.format("%c%c%s", firstChar, secondChar, tail);
 
-                        result.add(errorCode);
-                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCodes:\n" + errorCode);
+                        else if(faultCode != null && faultDesc == null)
+                        {
+                            mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode +
+                                    "\n" + "No description found for code: " + faultCode);
+                        }
                     }
                 }
+                else
+                {
+                    faultCode = "No error found...";
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode);
+                }
             }
-        }else {
-            mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
         }
     }
 
-    private void getElmInfo(Message msg)
-    {
-        if (msg.obj.toString().contains("ELM")) {
+    protected void performCalculations(String fault) {
 
-            tmpmsg = tmpmsg.replaceAll("ATZ", "");
-            tmpmsg = tmpmsg.replaceAll("ATI", "");
-            tmpmsg = tmpmsg.replaceAll("atz", "");
-            tmpmsg = tmpmsg.replaceAll("ati", "");
+        final String result = fault;
+        String workingData;
+        int startIndex = 0;//Header size.
 
+        troubleCodesArray.clear();
+
+        String canOneFrame = result.replaceAll("[\r\n]", "");
+        int canOneFrameLength = canOneFrame.length();
+        if (canOneFrameLength <= 16 && canOneFrameLength % 4 == 0) {//CAN(ISO-15765) protocol one frame.
+            workingData = canOneFrame;//43yy{codes}
+            startIndex = 4;//Header is 43yy, yy showing the number of data items.
+        } else if (result.contains(":")) {//CAN(ISO-15765) protocol two and more frames.
+            workingData = result.replaceAll("[\r\n].:", "");//xxx43yy{codes}
+            startIndex = 7;//Header is xxx43yy, xxx is bytes of information to follow, yy showing the number of data items.
+        } else {//ISO9141-2, KWP2000 Fast and KWP2000 5Kbps (ISO15031) protocols.
+            workingData = result.replaceAll("^43|[\r\n]43|[\r\n]", "");
+        }
+        for (int begin = startIndex; begin < workingData.length(); begin += 4) {
+            String dtc = "";
+            byte b1 = hexStringToByteArray(workingData.charAt(begin));
+            int ch1 = ((b1 & 0xC0) >> 6);
+            int ch2 = ((b1 & 0x30) >> 4);
+            dtc += dtcLetters[ch1];
+            dtc += hexArray[ch2];
+            dtc += workingData.substring(begin+1, begin + 4);
+
+            if (dtc.equals("P0000")) {
+                continue;
+            }
+
+            troubleCodesArray.add(dtc);
+        }
+    }
+
+    private byte hexStringToByteArray(char s) {
+        return (byte) ((Character.digit(s, 16) << 4));
+    }
+
+    private void getElmInfo(String tmpmsg) {
+
+        if (tmpmsg.contains("ELM") || tmpmsg.contains("elm")) {
             devicename = tmpmsg;
+        }
 
-            //Status.setText(devicename);
-        } else if (msg.obj.toString().contains("SAE") || msg.obj.toString().contains("ISO")
-                || msg.obj.toString().contains("sae") || msg.obj.toString().contains("iso")
-                )
-        {
-            tmpmsg = tmpmsg.replaceAll("ATDP", "");
-            tmpmsg = tmpmsg.replaceAll("atdp", "");
-
+        if (tmpmsg.contains("SAE") || tmpmsg.contains("ISO")
+                || tmpmsg.contains("sae") || tmpmsg.contains("iso") || tmpmsg.contains("AUTO")) {
             deviceprotocol = tmpmsg;
+        }
 
+        if (deviceprotocol != null && devicename != null) {
             Status.setText(devicename + " " + deviceprotocol);
         }
-
-        if(initializeCommands.length != 0)
-        {
-            String send = initializeCommands[whichCommand];
-            sendEcuMessage(send);
-            Info.setText(send);
-        }
     }
 
-    private void generateVolt(String msg)
-    {
-        if (msg.indexOf("V") != -1)//battery voltage
+    private void generateVolt(String msg) {
+        if(msg.length() <= 5)
         {
-            if (msg.length() <= 5 && msg.contains(".")) {
+            if (msg.indexOf("V") != -1 && msg.contains("."))
+            {
                 Volt.setText(msg);
             }
-        }
 
-        if (msg.indexOf("ATRV") != -1)//battery voltage
-        {
-            String msgVolt = msg.replace("ATRV","");
-            msgVolt.replace("atrv","");
+            if (msg.indexOf("ATRV") != -1)//battery voltage
+            {
+                String msgVolt = msg.replace("ATRV", "");
+                msgVolt.replace("atrv", "");
 
-            if(msgVolt.contains("V"))
-            {
-                Volt.setText(msgVolt);
-            }
-            else
-            {
-                Volt.setText(msgVolt + "V");
+                if (msgVolt.contains("V")) {
+                    Volt.setText(msgVolt);
+                } else {
+                    Volt.setText(msgVolt + "V");
+                }
             }
 
-        }
-
-        if (msg.length() <= 4)//battery voltage
-        {
-            if (msg.contains(".")) {
-                Volt.setText(msg + "V");
+            if (msg.length() <= 4)//battery voltage
+            {
+                if (msg.contains(".")) {
+                    Volt.setText(msg + "V");
+                }
             }
         }
     }
 
-
     private void setPidsSupported(String buffer) {
+
         Info.setText("Trying to get available pids : " + String.valueOf(trycount));
         trycount++;
 
@@ -1260,8 +1340,8 @@ public class MainActivity extends AppCompatActivity {
             }
             m_getPids = true;
             mConversationArrayAdapter.add(mConnectedDeviceName + ": " + supportedPID.toString());
-            whichCommand = 0;
-            sendEcuMessage(VOLTAGE);
+            whichCommand = -1;
+            sendEcuMessage("ATI");
 
         } else {
 
@@ -1300,8 +1380,9 @@ public class MainActivity extends AppCompatActivity {
 
         int index = msg.indexOf("41");
 
-        if(index != -1)
-        {
+        String tmpmsg = null;
+
+        if (index != -1) {
             tmpmsg = msg.substring(index, msg.length());
 
             if (tmpmsg.substring(0, 2).equals("41")) {
@@ -1319,7 +1400,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (tmpmsg.contains("410C")) {
                     //((A*256)+B)/4
-                    double val =((A*256)+B)/4;
+                    double val = ((A * 256) + B) / 4;
                     int intval = (int) val;
                     rpmval = intval;
                     rpm.setTargetValue(intval / 100);
@@ -1354,29 +1435,29 @@ public class MainActivity extends AppCompatActivity {
                     mConversationArrayAdapter.add("Intake Man Pressure: " + Integer.toString(A) + " kPa");
                 } else if (tmpmsg.contains("4110")) {
                     // ((256*A)+B) / 100  [g/s]
-                    double val = ((256*A)+B) / 100;
+                    double val = ((256 * A) + B) / 100;
                     int intval = (int) val;
                     Maf.setText(Integer.toString(intval) + " g/s");
                     mConversationArrayAdapter.add("Maf Air Flow: " + Integer.toString(intval) + " g/s");
                 } else if (tmpmsg.contains("4123")) {
                     // ((A*256)+B)*0.079
-                    double val = ((A*256)+B)*0.079;
+                    double val = ((A * 256) + B) * 0.079;
                     int intval = (int) val;
                     mConversationArrayAdapter.add("Fuel Rail Pressure: " + Integer.toString(intval) + " kPa");
                 } else if (tmpmsg.contains("4131")) {
                     //Distance traveled since codes cleared (256*A)+B km
-                    double val = (A*256)+B;
+                    double val = (A * 256) + B;
                     int intval = (int) val;
                     mConversationArrayAdapter.add("Distance traveled: " + Integer.toString(intval) + " km");
 
                 } else if (tmpmsg.contains("4111")) {
                     //Throttle position 0 -100 % A*100/255
-                    double val = A*100/255;
+                    double val = A * 100 / 255;
                     int intval = (int) val;
                     mConversationArrayAdapter.add("Fuel Rail Pressure: " + Integer.toString(intval) + " %");
                 } else if (tmpmsg.contains("4104")) {
                     // A*100/255
-                    double val = A*100/255;
+                    double val = A * 100 / 255;
                     int calcLoad = (int) val;
 
                     Load.setText(Integer.toString(calcLoad) + " %");
@@ -1397,6 +1478,44 @@ public class MainActivity extends AppCompatActivity {
                     mConversationArrayAdapter.add("Fuel Consumption: " + consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
                 }
             }
+        }
+    }
+
+    enum RSP_ID {
+        PROMPT(">"),
+        OK("OK"),
+        MODEL("ELM"),
+        NODATA("NODATA"),
+        SEARCH("SEARCHING"),
+        ERROR("ERROR"),
+        NOCONN("UNABLE"),
+        NOCONN_MSG("UNABLE TO CONNECT"),
+        NOCONN2("NABLETO"),
+        CANERROR("CANERROR"),
+        CONNECTED("ECU CONNECTED"),
+        BUSBUSY("BUSBUSY"),
+        BUSY("BUSY"),
+        BUSERROR("BUSERROR"),
+        BUSINIERR("BUSINIT:ERR"),
+        BUSINIERR2("BUSINIT:BUS"),
+        BUSINIERR3("BUSINIT:...ERR"),
+        BUS("BUS"),
+        FBERROR("FBERROR"),
+        DATAERROR("DATAERROR"),
+        BUFFERFULL("BUFFERFULL"),
+        STOPPED("STOPPED"),
+        RXERROR("<"),
+        QMARK("?"),
+        UNKNOWN("");
+        private String response;
+
+        RSP_ID(String response) {
+            this.response = response;
+        }
+
+        @Override
+        public String toString() {
+            return response;
         }
     }
 }

@@ -10,8 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/title_paired_devices"
-        android:background="#999"
-        android:textColor="#000"
+        android:background="#333"
+        android:textColor="#fff"
         android:paddingLeft="5dp"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:text="@string/title_other_devices"
         android:visibility="gone"
-        android:background="#666"
+        android:background="#333"
         android:textColor="#fff"
         android:paddingLeft="5dp"
     />
@@ -44,8 +44,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="14sp"
-        android:textColor="#000"
-        android:background="#999"
+        android:textColor="#fff"
+        android:background="#333"
         android:text="@string/button_scan"
     />
 </LinearLayout>

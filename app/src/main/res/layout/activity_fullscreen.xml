@@ -48,7 +48,7 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingTop="10sp"
+            android:paddingTop="8sp"
             android:layout_alignParentRight="true"
             android:layout_alignParentLeft="true"/>
 

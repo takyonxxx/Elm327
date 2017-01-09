@@ -16,6 +16,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.util.Log;
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -399,17 +400,21 @@ public class BluetoothService {
             mmInStream = tmpIn;            
             mmOutStream = tmpOut;
         }
+
         String s,msg;
-        public void run() {   
+        public void run() {
+
             while (true) {
-                try {    
+                try {
                   byte[] buffer = new byte[1];
                   int bytes = mmInStream.read(buffer, 0, buffer.length);
-                	s = new String(buffer);		
+                	s = new String(buffer);
             		for(int i = 0; i < s.length(); i++){
-            			char x = s.charAt(i);	
+            			char x = s.charAt(i);
             			msg = msg + x;
-                        if (x == 0x3e) {                          	
+                        //if (x == 0x3e) {
+                        if(msg.contains(">"))
+                        {
                         	mHandler.obtainMessage(MainActivity.MESSAGE_READ, buffer.length, -1, msg).sendToTarget();
                         	msg="";
                         }
@@ -421,8 +426,8 @@ public class BluetoothService {
                       BluetoothService.this.start();
                     break;
                 }
-            }           
-        }       
+            }
+        }
         public void write(byte[] buffer) {
             try {
                 mmOutStream.write(buffer);
@@ -433,6 +438,32 @@ public class BluetoothService {
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }
+        }
+
+        protected void readRawData(InputStream in) throws IOException {
+            byte b;
+            StringBuilder res = new StringBuilder();
+
+            // read until '>' arrives OR end of stream reached (and skip ' ')
+            char c;
+            while (true) {
+                b = (byte) in.read();
+                if (b == -1) // -1 if the end of the stream is reached
+                {
+                    break;
+                }
+                c = (char) b;
+                if (c == '>') // read until '>' arrives
+                {
+                    break;
+                }
+                if (c != ' ') // skip ' '
+                {
+                    res.append(c);
+                }
+            }
+
+            msg = res.toString().trim();
         }
 
         public void cancel() {
