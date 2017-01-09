@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -59,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
+    protected final static char[] dtcLetters = {'P', 'C', 'B', 'U'};
+    protected final static char[] hexArray = "0123456789ABCDEF".toCharArray();
     private static final String[] PIDS = {
             "01", "02", "03", "04", "05", "06", "07", "08",
             "09", "0A", "0B", "0C", "0D", "0E", "0F", "10",
@@ -70,9 +71,10 @@ public class MainActivity extends AppCompatActivity {
     private static final float APPBAR_ELEVATION = 14f;
     private static boolean actionbar = true;
     final List<String> commandslist = new ArrayList<String>();
-    final List<Double> avgconsumption = new ArrayList<Double>();
-    MenuItem itemtemp;
     ;
+    final List<Double> avgconsumption = new ArrayList<Double>();
+    final List<String> troubleCodesArray = new ArrayList<String>();
+    MenuItem itemtemp;
     GaugeSpeed speed;
     GaugeRpm rpm;
     BluetoothDevice currentdevice;
@@ -81,13 +83,7 @@ public class MainActivity extends AppCompatActivity {
     String[] tryCommands;
     String[] initializeCommands;
     Intent serverIntent = null;
-
     TroubleCodes troubleCodes;
-
-    protected final static char[] dtcLetters = {'P', 'C', 'B', 'U'};
-    protected final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-    final List<String> troubleCodesArray = new ArrayList<String>();
-
     String VOLTAGE = "ATRV",
             PROTOCOL = "ATDP",
             ENGINE_COOLANT_TEMP = "0105",  //A-40
@@ -184,8 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     byte[] writeBuf = (byte[]) msg.obj;
                     String writeMessage = new String(writeBuf);
 
-                    if(commandmode || !initialized)
-                    {
+                    if (commandmode || !initialized) {
                         mConversationArrayAdapter.add("Command:  " + writeMessage);
                     }
 
@@ -194,8 +189,7 @@ public class MainActivity extends AppCompatActivity {
 
                     String tmpmsg = clearMsg(msg);
 
-                    if(commandmode || !initialized)
-                    {
+                    if (commandmode || !initialized) {
                         mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
                     }
 
@@ -957,9 +951,7 @@ public class MainActivity extends AppCompatActivity {
                     whichCommand++;
                 }
             }
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             sendEcuMessage(VOLTAGE);
         }
     }
@@ -1103,8 +1095,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            if(commandmode)
-            {
+            if (commandmode) {
                 getFaultInfo(tmpmsg);
 
                 return;
@@ -1147,7 +1138,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
         }
     }
-    //getFaultInfo("0387F1104300000000000000")
 
     private void getFaultInfo(String tmpmsg) {
 
@@ -1164,27 +1154,19 @@ public class MainActivity extends AppCompatActivity {
                 String faultCode = null;
                 String faultDesc = null;
 
-                if(troubleCodesArray.size() > 0)
-                {
-                    for (int i = 0; i < troubleCodesArray.size(); i++)
-                    {
+                if (troubleCodesArray.size() > 0) {
+                    for (int i = 0; i < troubleCodesArray.size(); i++) {
                         faultCode = troubleCodesArray.get(i);
-                        faultDesc  = troubleCodes.getFaultCode(faultCode);
+                        faultDesc = troubleCodes.getFaultCode(faultCode);
 
-                        if(faultCode != null && faultDesc != null)
-                        {
+                        if (faultCode != null && faultDesc != null) {
                             mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode + "\n" + faultDesc);
-                        }
-
-                        else if(faultCode != null && faultDesc == null)
-                        {
+                        } else if (faultCode != null && faultDesc == null) {
                             mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode +
                                     "\n" + "No description found for code: " + faultCode);
                         }
                     }
-                }
-                else
-                {
+                } else {
                     faultCode = "No error found...";
                     mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode);
                 }
@@ -1218,7 +1200,7 @@ public class MainActivity extends AppCompatActivity {
             int ch2 = ((b1 & 0x30) >> 4);
             dtc += dtcLetters[ch1];
             dtc += hexArray[ch2];
-            dtc += workingData.substring(begin+1, begin + 4);
+            dtc += workingData.substring(begin + 1, begin + 4);
 
             if (dtc.equals("P0000")) {
                 continue;
@@ -1249,10 +1231,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void generateVolt(String msg) {
-        if(msg.length() <= 5)
-        {
-            if (msg.indexOf("V") != -1 && msg.contains("."))
-            {
+        if (msg.length() <= 5) {
+            if (msg.indexOf("V") != -1 && msg.contains(".")) {
                 Volt.setText(msg);
             }
 
