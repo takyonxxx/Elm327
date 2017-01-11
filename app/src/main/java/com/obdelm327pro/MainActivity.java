@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,6 +24,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
    7	ISO 15765-4 CAN (29 bit ID, 500 kbaud)
    8	ISO 15765-4 CAN (11 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo
    9	ISO 15765-4 CAN (29 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo*/
+
     public static final int MESSAGE_READ = 2;
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
@@ -58,13 +61,16 @@ public class MainActivity extends AppCompatActivity {
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
+
     protected final static char[] dtcLetters = {'P', 'C', 'B', 'U'};
     protected final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
     private static final String[] PIDS = {
             "01", "02", "03", "04", "05", "06", "07", "08",
             "09", "0A", "0B", "0C", "0D", "0E", "0F", "10",
             "11", "12", "13", "14", "15", "16", "17", "18",
             "19", "1A", "1B", "1C", "1D", "1E", "1F", "20"};
+
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
@@ -104,18 +110,18 @@ public class MainActivity extends AppCompatActivity {
             PIDS_SUPPORTED = "0120"; //PIDs supported
     Toolbar toolbar;
     AppBarLayout appbar;
+
     private PowerManager.WakeLock wl;
     private Menu menu;
     private EditText mOutEditText;
     private Button mSendButton, mPidsButton, mTroublecodes, mClearTroublecodes, mClearlist;
     private ListView mConversationView;
-    private TextView Load, Fuel, Volt, Temp, Status, Loadtext, Volttext, Temptext, Centertext, Info, Airtemp_text, Airtemp, Maf_text, Maf;
+    private TextView engineLoad, Fuel, voltage, coolantTemperature, Status, Loadtext, Volttext, Temptext, Centertext, Info, Airtemp_text, airTemperature, Maf_text, Maf;
     private String mConnectedDeviceName = "Ecu";
-    private int rpmval = 0, currenttemp = 0, intakeairtemp = 0, contmodulevolt = 0, ambientairtemp = 0,
+    private int rpmval = 0, intakeairtemp = 0, ambientairtemp = 0, coolantTemp = 0,
             engineoiltemp = 0, b1s1temp = 0, Enginetype = 0, FaceColor = 0,
             whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0, ecutrycount = 0;
     private double Enginedisplacement = 1500;
-
     // Local Bluetooth adapter
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
@@ -125,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
     // The Handler that gets information back from the BluetoothChatService
+
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -144,6 +151,8 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             avgconsumption.clear();
+                            mConversationArrayAdapter.clear();
+                            ecuok = false;
                             tryconnect = false;
                             resetvalues();
 
@@ -248,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fullscreen);
+        setContentView(R.layout.activity_gauges);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -269,17 +278,17 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         Status = (TextView) findViewById(R.id.Status);
-        Load = (TextView) findViewById(R.id.Load);
+        engineLoad = (TextView) findViewById(R.id.Load);
         Fuel = (TextView) findViewById(R.id.Fuel);
-        Temp = (TextView) findViewById(R.id.Temp);
-        Volt = (TextView) findViewById(R.id.Volt);
+        coolantTemperature = (TextView) findViewById(R.id.Temp);
+        voltage = (TextView) findViewById(R.id.Volt);
         Loadtext = (TextView) findViewById(R.id.Load_text);
         Temptext = (TextView) findViewById(R.id.Temp_text);
         Volttext = (TextView) findViewById(R.id.Volt_text);
         Centertext = (TextView) findViewById(R.id.Center_text);
         Info = (TextView) findViewById(R.id.info);
         Airtemp_text = (TextView) findViewById(R.id.Airtemp_text);
-        Airtemp = (TextView) findViewById(R.id.Airtemp);
+        airTemperature = (TextView) findViewById(R.id.Airtemp);
         Maf_text = (TextView) findViewById(R.id.Maf_text);
         Maf = (TextView) findViewById(R.id.Maf);
         speed = (GaugeSpeed) findViewById(R.id.GaugeSpeed);
@@ -292,6 +301,7 @@ public class MainActivity extends AppCompatActivity {
         mClearlist = (Button) findViewById(R.id.button_clearlist);
         mTroublecodes = (Button) findViewById(R.id.button_troublecodes);
         mConversationView = (ListView) findViewById(R.id.in);
+
 
         troubleCodes = new TroubleCodes();
 
@@ -313,7 +323,7 @@ public class MainActivity extends AppCompatActivity {
 
         tryCommands = new String[]{"ATZ", "ATZ", "ATL0", "ATRD", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
 
-        initializeCommands = new String[]{"ATI", "ATDP", "0100"};
+        initializeCommands = new String[]{"ATI", "ATDP", "ATRV"};
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -452,6 +462,10 @@ public class MainActivity extends AppCompatActivity {
                     if (mChatService != null) mChatService.stop();
                     item.setTitle("Connect");
                     Status.setText("Not Connected");
+                    resetvalues();
+                    ecuok = false;
+                    mConversationArrayAdapter.clear();
+                    avgconsumption.clear();
                 }
 
                 return true;
@@ -517,6 +531,8 @@ public class MainActivity extends AppCompatActivity {
         setDefaultOrientation();
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     @Override
     public synchronized void onResume() {
         super.onResume();
@@ -542,8 +558,6 @@ public class MainActivity extends AppCompatActivity {
         getPreferences();
         setDefaultOrientation();
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     @Override
     public void onStop() {
@@ -709,14 +723,14 @@ public class MainActivity extends AppCompatActivity {
 
         Status.setTextSize(sttxtsize);
         Fuel.setTextSize(txtsize + 2);
-        Temp.setTextSize(txtsize);
-        Load.setTextSize(txtsize);
-        Volt.setTextSize(txtsize);
+        coolantTemperature.setTextSize(txtsize);
+        engineLoad.setTextSize(txtsize);
+        voltage.setTextSize(txtsize);
         Temptext.setTextSize(txtsize);
         Loadtext.setTextSize(txtsize);
         Volttext.setTextSize(txtsize);
         Airtemp_text.setTextSize(txtsize);
-        Airtemp.setTextSize(txtsize);
+        airTemperature.setTextSize(txtsize);
         Maf_text.setTextSize(txtsize);
         Maf.setTextSize(txtsize);
         Info.setTextSize(sttxtsize);
@@ -732,17 +746,17 @@ public class MainActivity extends AppCompatActivity {
         mClearlist.setVisibility(View.INVISIBLE);
         rpm.setVisibility(View.VISIBLE);
         speed.setVisibility(View.VISIBLE);
-        Load.setVisibility(View.VISIBLE);
+        engineLoad.setVisibility(View.VISIBLE);
         Fuel.setVisibility(View.VISIBLE);
-        Volt.setVisibility(View.VISIBLE);
-        Temp.setVisibility(View.VISIBLE);
+        voltage.setVisibility(View.VISIBLE);
+        coolantTemperature.setVisibility(View.VISIBLE);
         Loadtext.setVisibility(View.VISIBLE);
         Volttext.setVisibility(View.VISIBLE);
         Temptext.setVisibility(View.VISIBLE);
         Centertext.setVisibility(View.VISIBLE);
         Info.setVisibility(View.VISIBLE);
         Airtemp_text.setVisibility(View.VISIBLE);
-        Airtemp.setVisibility(View.VISIBLE);
+        airTemperature.setVisibility(View.VISIBLE);
         Maf_text.setVisibility(View.VISIBLE);
         Maf.setVisibility(View.VISIBLE);
     }
@@ -750,17 +764,17 @@ public class MainActivity extends AppCompatActivity {
     public void visiblecmd() {
         rpm.setVisibility(View.INVISIBLE);
         speed.setVisibility(View.INVISIBLE);
-        Load.setVisibility(View.INVISIBLE);
+        engineLoad.setVisibility(View.INVISIBLE);
         Fuel.setVisibility(View.INVISIBLE);
-        Volt.setVisibility(View.INVISIBLE);
-        Temp.setVisibility(View.INVISIBLE);
+        voltage.setVisibility(View.INVISIBLE);
+        coolantTemperature.setVisibility(View.INVISIBLE);
         Loadtext.setVisibility(View.INVISIBLE);
         Volttext.setVisibility(View.INVISIBLE);
         Temptext.setVisibility(View.INVISIBLE);
         Centertext.setVisibility(View.INVISIBLE);
         Info.setVisibility(View.INVISIBLE);
         Airtemp_text.setVisibility(View.INVISIBLE);
-        Airtemp.setVisibility(View.INVISIBLE);
+        airTemperature.setVisibility(View.INVISIBLE);
         Maf_text.setVisibility(View.INVISIBLE);
         Maf.setVisibility(View.INVISIBLE);
         mConversationView.setVisibility(View.VISIBLE);
@@ -861,7 +875,24 @@ public class MainActivity extends AppCompatActivity {
     private void setupChat() {
 
         // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
+        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message){
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent){
+                // Get the Item from ListView
+                View view = super.getView(position, convertView, parent);
+
+                // Initialize a TextView for ListView each Item
+                TextView tv = (TextView) view.findViewById(R.id.listText);
+
+                // Set the text color of TextView (ListView Item)
+                tv.setTextColor(Color.parseColor("#3ADF00"));
+                tv.setTextSize(10);
+
+                // Generate ListView Item using TextView
+                return view;
+            }
+        };
+
         mConversationView.setAdapter(mConversationArrayAdapter);
 
         // Initialize the BluetoothChatService to perform bluetooth connections
@@ -956,7 +987,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private char firstChar(int hex) {
         int b = hex / 4;
         switch (b) {
@@ -1047,11 +1077,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resetItems() {
-        Load.setText("0 %");
-        Volt.setText("0 V");
-        Temp.setText("0 C°");
+        engineLoad.setText("0 %");
+        voltage.setText("0 V");
+        coolantTemperature.setText("0 C°");
         Info.setText("");
-        Airtemp.setText("0 C°");
+        airTemperature.setText("0 C°");
         Maf.setText("0 g/s");
         Fuel.setText("0 - 0 l/h");
         initialized = false;
@@ -1075,6 +1105,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void analysMsg(Message msg) {
+
         String tmpmsg = clearMsg(msg);
 
         generateVolt(tmpmsg);
@@ -1097,11 +1128,15 @@ public class MainActivity extends AppCompatActivity {
 
             if (commandmode) {
                 getFaultInfo(tmpmsg);
-
                 return;
             }
 
-            compileMessage(tmpmsg);
+            try{
+                analysPIDS(tmpmsg);
+            }catch(Exception e)
+            {
+                Info.setText("Error : " + e.getMessage());
+            }
 
             checkData(tmpmsg);
 
@@ -1230,39 +1265,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void generateVolt(String msg) {
-        if (msg.length() <= 5) {
-            if (msg.indexOf("V") != -1 && msg.contains(".")) {
-                Volt.setText(msg);
-            }
-
-            if (msg.indexOf("ATRV") != -1)//battery voltage
-            {
-                String msgVolt = msg.replace("ATRV", "");
-                msgVolt.replace("atrv", "");
-
-                if (msgVolt.contains("V")) {
-                    Volt.setText(msgVolt);
-                } else {
-                    Volt.setText(msgVolt + "V");
-                }
-            }
-
-            if (msg.length() <= 4)//battery voltage
-            {
-                if (msg.contains(".")) {
-                    Volt.setText(msg + "V");
-                }
-            }
-        }
-    }
 
     private void setPidsSupported(String buffer) {
 
         Info.setText("Trying to get available pids : " + String.valueOf(trycount));
         trycount++;
-
-        byte[] pidSupported = null;
 
         StringBuilder flags = new StringBuilder();
         String buf = buffer.toString();
@@ -1270,7 +1277,6 @@ public class MainActivity extends AppCompatActivity {
         buf = buf.replace("\t", "");
         buf = buf.replace(" ", "");
         buf = buf.replace(">", "");
-        pidSupported = buf.getBytes();
 
         if (buf.indexOf("4100") == 0 || buf.indexOf("4120") == 0) {
 
@@ -1321,7 +1327,7 @@ public class MainActivity extends AppCompatActivity {
             m_getPids = true;
             mConversationArrayAdapter.add(mConnectedDeviceName + ": " + supportedPID.toString());
             whichCommand = -1;
-            sendEcuMessage("ATI");
+            sendEcuMessage("ATRV");
 
         } else {
 
@@ -1337,127 +1343,192 @@ public class MainActivity extends AppCompatActivity {
         return sum.doubleValue() / listavg.size();
     }
 
-    private String hexToBin(String hex) {
-        String bin = "";
-        String binFragment = "";
-        int iHex;
-        hex = hex.trim();
-        hex = hex.replaceFirst("0x", "");
+    private void analysPIDS(String dataRecieved) {
 
-        for (int i = 0; i < hex.length(); i++) {
-            iHex = Integer.parseInt("" + hex.charAt(i), 16);
-            binFragment = Integer.toBinaryString(iHex);
+        int A = 0;
+        int B = 0;
+        int PID = 0;
 
-            while (binFragment.length() < 4) {
-                binFragment = "0" + binFragment;
-            }
-            bin += binFragment;
-        }
-        return bin;
-    }
+        if ((dataRecieved != null) && (dataRecieved.matches("^[0-9A-F]+$"))) {
 
-    private void compileMessage(String msg) {
+            dataRecieved = dataRecieved.trim();
 
-        int index = msg.indexOf("41");
+            int index = dataRecieved.indexOf("41");
 
-        String tmpmsg = null;
+            String tmpmsg = null;
 
-        if (index != -1) {
-            tmpmsg = msg.substring(index, msg.length());
+            if (index != -1) {
 
-            if (tmpmsg.substring(0, 2).equals("41")) {
+                tmpmsg = dataRecieved.substring(index, dataRecieved.length());
 
-                int A = 0;
-                int B = 0;
+                if (tmpmsg.substring(0, 2).equals("41")) {
 
-                try {
-
+                    PID = Integer.parseInt(tmpmsg.substring(2, 4), 16);
                     A = Integer.parseInt(tmpmsg.substring(4, 6), 16);
                     B = Integer.parseInt(tmpmsg.substring(6, 8), 16);
 
-                } catch (Exception e) {
-                }
-
-                if (tmpmsg.contains("410C")) {
-                    //((A*256)+B)/4
-                    double val = ((A * 256) + B) / 4;
-                    int intval = (int) val;
-                    rpmval = intval;
-                    rpm.setTargetValue(intval / 100);
-
-                } else if (tmpmsg.contains("410D")) {
-                    // A
-                    speed.setTargetValue(A);
-                } else if (tmpmsg.contains("4105")) {
-                    // A-40
-                    int tempC = A - 40;
-                    currenttemp = tempC;
-                    Temp.setText(Integer.toString(tempC) + " C°");
-                    mConversationArrayAdapter.add("Enginetemp: " + Integer.toString(tempC) + " C°");
-                } else if (tmpmsg.contains("410F")) {
-                    // A - 40
-                    int tempC = A - 40;
-                    intakeairtemp = tempC;
-                    Airtemp.setText(Integer.toString(intakeairtemp) + " C°");
-                    mConversationArrayAdapter.add("Intakeairtemp: " + Integer.toString(intakeairtemp) + " C°");
-                } else if (tmpmsg.contains("4146")) {
-                    // A-40 [DegC]
-                    int tempC = A - 40;
-                    ambientairtemp = tempC;
-                    mConversationArrayAdapter.add("Ambientairtemp: " + Integer.toString(ambientairtemp) + " C°");
-                } else if (tmpmsg.contains("415C")) {
-                    //A-40
-                    int tempC = A - 40;
-                    engineoiltemp = tempC;
-                    mConversationArrayAdapter.add("Engineoiltemp: " + Integer.toString(engineoiltemp) + " C°");
-                } else if (tmpmsg.contains("410B")) {
-                    // A
-                    mConversationArrayAdapter.add("Intake Man Pressure: " + Integer.toString(A) + " kPa");
-                } else if (tmpmsg.contains("4110")) {
-                    // ((256*A)+B) / 100  [g/s]
-                    double val = ((256 * A) + B) / 100;
-                    int intval = (int) val;
-                    Maf.setText(Integer.toString(intval) + " g/s");
-                    mConversationArrayAdapter.add("Maf Air Flow: " + Integer.toString(intval) + " g/s");
-                } else if (tmpmsg.contains("4123")) {
-                    // ((A*256)+B)*0.079
-                    double val = ((A * 256) + B) * 0.079;
-                    int intval = (int) val;
-                    mConversationArrayAdapter.add("Fuel Rail Pressure: " + Integer.toString(intval) + " kPa");
-                } else if (tmpmsg.contains("4131")) {
-                    //Distance traveled since codes cleared (256*A)+B km
-                    double val = (A * 256) + B;
-                    int intval = (int) val;
-                    mConversationArrayAdapter.add("Distance traveled: " + Integer.toString(intval) + " km");
-
-                } else if (tmpmsg.contains("4111")) {
-                    //Throttle position 0 -100 % A*100/255
-                    double val = A * 100 / 255;
-                    int intval = (int) val;
-                    mConversationArrayAdapter.add("Fuel Rail Pressure: " + Integer.toString(intval) + " %");
-                } else if (tmpmsg.contains("4104")) {
-                    // A*100/255
-                    double val = A * 100 / 255;
-                    int calcLoad = (int) val;
-
-                    Load.setText(Integer.toString(calcLoad) + " %");
-                    mConversationArrayAdapter.add("Engine Load: " + Integer.toString(calcLoad) + " %");
-
-                    String consumption = null;
-
-                    if (Enginetype == 0) {
-                        consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
-                        avgconsumption.add((0.001 * 0.004 * 4 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
-
-                    } else if (Enginetype == 1) {
-                        consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
-                        avgconsumption.add((0.001 * 0.004 * 4 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
-
-                    }
-                    Fuel.setText(consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
-                    mConversationArrayAdapter.add("Fuel Consumption: " + consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
+                    calculateEcuValues(PID, A, B);
                 }
             }
+        }
+    }
+
+    private void generateVolt(String msg) {
+
+        String VoltText = null;
+
+        if ((msg != null) && (msg.matches("\\s*[0-9]{1,2}([.][0-9]{1,2})\\s*"))) {
+
+            VoltText = msg + "V";
+
+            mConversationArrayAdapter.add(mConnectedDeviceName + ": " + msg + "V");
+
+        } else if ((msg != null) && (msg.matches("\\s*[0-9]{1,2}([.][0-9]{1,2})?V\\s*"))) {
+
+            VoltText = msg;
+
+            mConversationArrayAdapter.add(mConnectedDeviceName + ": " + msg);
+        }
+
+        if (VoltText != null) {
+            voltage.setText(VoltText);
+        }
+    }
+
+    private void calculateEcuValues(int PID, int A, int B) {
+
+        double val = 0;
+        int intval = 0;
+        int tempC = 0;
+
+        switch (PID) {
+
+            case 4://PID(04): Engine Load
+
+                // A*100/255
+                val = A * 100 / 255;
+                int calcLoad = (int) val;
+
+                engineLoad.setText(Integer.toString(calcLoad) + " %");
+                mConversationArrayAdapter.add("Engine Load: " + Integer.toString(calcLoad) + " %");
+
+                String consumption = null;
+
+                if (Enginetype == 0) {
+                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
+                    avgconsumption.add((0.001 * 0.004 * 4 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
+
+                } else if (Enginetype == 1) {
+                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
+                    avgconsumption.add((0.001 * 0.004 * 4 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
+
+                }
+                Fuel.setText(consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
+                mConversationArrayAdapter.add("Fuel Consumption: " + consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
+
+                break;
+
+            case 5://PID(05): Coolant Temperature
+
+                // A-40
+                tempC = A - 40;
+                coolantTemp = tempC;
+                coolantTemperature.setText(Integer.toString(coolantTemp) + " C°");
+                mConversationArrayAdapter.add("Enginetemp: " + Integer.toString(tempC) + " C°");
+
+                break;
+
+            case 11://PID(0B)
+
+                // A
+                mConversationArrayAdapter.add("Intake Man Pressure: " + Integer.toString(A) + " kPa");
+
+                break;
+
+            case 12: //PID(0C): RPM
+
+                //((A*256)+B)/4
+                val = ((A * 256) + B) / 4;
+                intval = (int) val;
+                rpmval = intval;
+                rpm.setTargetValue(intval / 100);
+
+                break;
+
+
+            case 13://PID(0D): KM
+
+                // A
+                speed.setTargetValue(A);
+
+                break;
+
+            case 15://PID(0F): Intake Temperature
+
+                // A - 40
+                tempC = A - 40;
+                intakeairtemp = tempC;
+                airTemperature.setText(Integer.toString(intakeairtemp) + " C°");
+                mConversationArrayAdapter.add("Intakeairtemp: " + Integer.toString(intakeairtemp) + " C°");
+
+                break;
+
+            case 16://PID(10): Maf
+
+                // ((256*A)+B) / 100  [g/s]
+                val = ((256 * A) + B) / 100;
+                intval = (int) val;
+                Maf.setText(Integer.toString(intval) + " g/s");
+                mConversationArrayAdapter.add("Maf Air Flow: " + Integer.toString(intval) + " g/s");
+
+                break;
+
+            case 17://PID(11)
+
+                //A*100/255
+                val = A * 100 / 255;
+                intval = (int) val;
+                mConversationArrayAdapter.add(" Throttle position: " + Integer.toString(intval) + " %");
+
+                break;
+
+            case 35://PID(23)
+
+                // ((A*256)+B)*0.079
+                val = ((A * 256) + B) * 0.079;
+                intval = (int) val;
+                mConversationArrayAdapter.add("Fuel Rail Pressure: " + Integer.toString(intval) + " kPa");
+
+                break;
+
+            case 49://PID(31)
+
+                //(256*A)+B km
+                val = (A * 256) + B;
+                intval = (int) val;
+                mConversationArrayAdapter.add("Distance traveled: " + Integer.toString(intval) + " km");
+
+                break;
+
+            case 70://PID(46)
+
+                // A-40 [DegC]
+                tempC = A - 40;
+                ambientairtemp = tempC;
+                mConversationArrayAdapter.add("Ambientairtemp: " + Integer.toString(ambientairtemp) + " C°");
+
+                break;
+
+            case 92://PID(5C)
+
+                //A-40
+                tempC = A - 40;
+                engineoiltemp = tempC;
+                mConversationArrayAdapter.add("Engineoiltemp: " + Integer.toString(engineoiltemp) + " C°");
+
+                break;
+
+            default:
         }
     }
 

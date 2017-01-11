@@ -58,15 +58,6 @@
         <CheckBoxPreference android:title="INTAKE_AIR_TEMP"
             android:defaultValue="true" android:summary="Pid : 010F"
             android:key="checkboxINTAKE_AIR_TEMP" />
-        <CheckBoxPreference android:title="FUEL_RAIL_PRESSURE"
-            android:defaultValue="true" android:summary="Pid : 0122"
-            android:key="checkboxFUEL_RAIL_PRESSURE" />
-        <CheckBoxPreference android:title="ENGINE_OIL_TEMP"
-            android:defaultValue="true" android:summary="Pid : 015C"
-            android:key="checkboxENGINE_OIL_TEMP" />
-        <CheckBoxPreference android:title="INTAKE_MAN_PRESSURE"
-            android:defaultValue="true" android:summary="Pid : 010B"
-            android:key="checkboxINTAKE_MAN_PRESSURE" />
         <CheckBoxPreference android:title="MAF_AIR_FLOW"
             android:defaultValue="true" android:summary="Pid : 0110"
             android:key="checkboxMAF_AIR_FLOW" />

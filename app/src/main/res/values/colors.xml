@@ -12,5 +12,16 @@
 
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color> 
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="colorPressedStart">#0489B1</color>
+    <color name="colorPressedEnd">#01A9DB</color>
+    <color name="colorFocusedEnd">#F7BE45</color>
+    <color name="colorFocusedStart">#F7D896</color>
+    <color name="colorEnd">#0B4C5F</color>
+    <color name="colorStart">#0B2F3A</color>
+    <color name="colorStroke">#ACA899</color>
+    <color name="white1">#FFFFFF</color>
+    <color name="white2">#DDDDDD</color>
+
 </resources>

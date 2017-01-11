@@ -38,7 +38,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-
         <TextView
             android:id="@+id/Status"
             android:layout_width="wrap_content"
@@ -48,7 +47,7 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingTop="8sp"
+            android:paddingTop="10sp"
             android:layout_alignParentRight="true"
             android:layout_alignParentLeft="true"/>
 
@@ -208,61 +207,88 @@
             android:layout_above="@+id/button_clearcodes"
             android:layout_below="@+id/Status"
             android:stackFromBottom="true"
-            android:textSize="8sp"
-            android:textColor="#FFFFFF"
             android:transcriptMode="alwaysScroll" />
         <Button
             android:id="@+id/button_send"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             style="?android:attr/buttonStyleSmall"
-            android:textSize="14sp"
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/custom_button"
             android:text="Send Command" />
 
         <Button
             android:id="@+id/button_pids"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_above="@+id/button_send"
-            android:layout_alignLeft="@+id/button_send"
             android:layout_alignParentRight="true"
-            android:textSize="14sp"
-            android:text="Available Pids" />
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/custom_button"
+            android:text="Available Pids"
+            android:layout_alignLeft="@+id/button_send"
+            android:layout_alignStart="@+id/button_send" />
         <Button
             android:id="@+id/button_clearcodes"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_alignParentRight="true"
-            android:layout_alignLeft="@+id/button_send"
             android:layout_above="@+id/button_troublecodes"
-            android:textSize="14sp"
-            android:text="Clear Faults" />
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/custom_button"
+            android:text="Clear Faults"
+            android:layout_alignLeft="@+id/button_pids"
+            android:layout_alignStart="@+id/button_pids" />
         <Button
             android:id="@+id/button_clearlist"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_alignParentLeft="true"
             android:layout_alignLeft="@+id/edit_text_out"
-            android:layout_alignRight="@+id/edit_text_out"
             android:layout_above="@+id/button_troublecodes"
-            android:textSize="14sp"
-            android:text="Clear Cmd List" />
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/custom_button"
+            android:text="Clear Cmd List"
+            android:layout_alignRight="@+id/button_troublecodes"
+            android:layout_alignEnd="@+id/button_troublecodes" />
         <Button
             android:id="@+id/button_troublecodes"
             style="?android:attr/buttonStyleSmall"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_alignLeft="@+id/edit_text_out"
-            android:layout_alignRight="@+id/edit_text_out"
             android:layout_above="@+id/button_send"
             android:layout_alignParentLeft="true"
-            android:textSize="14sp"
-            android:text="Fault Codes" />
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:background="@drawable/custom_button"
+            android:text="Fault Codes"
+            android:layout_alignRight="@+id/edit_text_out"
+            android:layout_alignEnd="@+id/edit_text_out" />
 
         <EditText
             android:id="@+id/edit_text_out"
@@ -275,7 +301,9 @@
             android:inputType="textShortMessage|textMultiLine"
             android:maxLines="4"
             android:textSize="14sp"
-            android:textColor="#FFFFFF"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="5dp"
+            android:textColor="#FFF"
             android:layout_toLeftOf="@+id/button_send"/>
 
     </RelativeLayout>
