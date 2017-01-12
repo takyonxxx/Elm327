@@ -148,6 +148,37 @@ public class MainActivity extends AppCompatActivity {
     // The Handler that gets information back from the BluetoothChatService
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
+
+    private final Handler mOBDHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+
+                    switch (msg.arg1) {
+                        case BluetoothService.STATE_CONNECTED:
+
+                            break;
+                        case BluetoothService.STATE_CONNECTING:
+
+                            break;
+                        case BluetoothService.STATE_NONE:
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE:
+                    break;
+
+                case MESSAGE_READ:
+                    break;
+
+                case MESSAGE_DEVICE_NAME:
+                    break;
+            }
+        }
+    };
+
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
