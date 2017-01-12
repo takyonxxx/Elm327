@@ -52,7 +52,24 @@ public class MainActivity extends AppCompatActivity {
    6	ISO 15765-4 CAN (11 bit ID, 500 kbaud)
    7	ISO 15765-4 CAN (29 bit ID, 500 kbaud)
    8	ISO 15765-4 CAN (11 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo
-   9	ISO 15765-4 CAN (29 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo*/
+   9	ISO 15765-4 CAN (29 bit ID, 250 kbaud) - used mainly on utility vehicles and Volvo
+
+
+    01 04 - ENGINE_LOAD
+    01 05 - ENGINE_COOLANT_TEMPERATURE
+    01 0C - ENGINE_RPM
+    01 0D - VEHICLE_SPEED
+    01 0F - INTAKE_AIR_TEMPERATURE
+    01 10 - MASS_AIR_FLOW
+    01 11 - THROTTLE_POSITION_PERCENTAGE
+    01 1F - ENGINE_RUN_TIME
+    01 2F - FUEL_LEVEL
+    01 46 - AMBIENT_AIR_TEMPERATURE
+    01 51 - FUEL_TYPE
+    01 5E - FUEL_CONSUMPTION_1
+    01 5F - FUEL_CONSUMPTION_2
+
+   */
 
     public static final int MESSAGE_READ = 2;
     public static final int MESSAGE_WRITE = 3;
@@ -84,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
     GaugeSpeed speed;
     GaugeRpm rpm;
     BluetoothDevice currentdevice;
-    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false, ecuok = false;
+    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false, ecuok = false, resetactive = false;
     String devicename = null, deviceprotocol = null, lastsend = null;
     String[] tryCommands;
     String[] initializeCommands;
@@ -110,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             PIDS_SUPPORTED = "0120"; //PIDs supported
     Toolbar toolbar;
     AppBarLayout appbar;
-
+    String trysend = null;
     private PowerManager.WakeLock wl;
     private Menu menu;
     private EditText mOutEditText;
@@ -128,10 +145,9 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothService mChatService = null;
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
+    // The Handler that gets information back from the BluetoothChatService
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
-    // The Handler that gets information back from the BluetoothChatService
-
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -150,13 +166,10 @@ public class MainActivity extends AppCompatActivity {
                             } catch (Exception e) {
                             }
 
-                            avgconsumption.clear();
-                            mConversationArrayAdapter.clear();
-                            ecuok = false;
                             tryconnect = false;
+                            resetactive = false;
                             resetvalues();
-
-                            sendEcuMessage("ATZ");
+                            sendEcuMessage("ATD");
 
                             break;
                         case BluetoothService.STATE_CONNECTING:
@@ -321,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
         //ATSTFF Set time out to maximum
         //ATSTHH Set timeout to 4ms
 
-        tryCommands = new String[]{"ATZ", "ATZ", "ATL0", "ATRD", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
+        tryCommands = new String[]{"ATZ", "ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
 
         initializeCommands = new String[]{"ATI", "ATDP", "ATRV"};
 
@@ -414,28 +427,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        speed.setTargetValue(220);
-        rpm.setTargetValue(80);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        speed.setTargetValue(0);
-                        rpm.setTargetValue(0);
-                    }
-                });
-            }
-        }).start();
-
         getPreferences();
+
+        resetgauges();
     }
 
     @Override
@@ -463,9 +457,6 @@ public class MainActivity extends AppCompatActivity {
                     item.setTitle("Connect");
                     Status.setText("Not Connected");
                     resetvalues();
-                    ecuok = false;
-                    mConversationArrayAdapter.clear();
-                    avgconsumption.clear();
                 }
 
                 return true;
@@ -495,7 +486,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case R.id.menu_reset:
                 resetvalues();
-                sendEcuMessage(VOLTAGE);
                 return true;
         }
 
@@ -524,14 +514,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
         setDefaultOrientation();
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     @Override
     public synchronized void onResume() {
@@ -831,9 +821,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void resetvalues() {
-
-        resetItems();
+    public void resetgauges() {
 
         speed.setTargetValue(220);
         rpm.setTargetValue(80);
@@ -857,6 +845,33 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    public void resetvalues() {
+
+        resetactive = true;
+
+        engineLoad.setText("0 %");
+        voltage.setText("0 V");
+        coolantTemperature.setText("0 C°");
+        Info.setText("");
+        airTemperature.setText("0 C°");
+        Maf.setText("0 g/s");
+        Fuel.setText("0 - 0 l/h");
+        initialized = false;
+        m_getPids = false;
+        whichCommand = -1;
+        trycount = 0;
+        avgconsumption.clear();
+        mConversationArrayAdapter.clear();
+        ecuok = false;
+        ecutrycount = 0;
+
+        resetgauges();
+
+        sendEcuMessage("ATZ");
+
+        resetactive = false;
+    }
+
     private void connectDevice(Intent data) {
         // Get the device MAC address
         String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
@@ -875,9 +890,9 @@ public class MainActivity extends AppCompatActivity {
     private void setupChat() {
 
         // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message){
+        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message) {
             @Override
-            public View getView(int position, View convertView, ViewGroup parent){
+            public View getView(int position, View convertView, ViewGroup parent) {
                 // Get the Item from ListView
                 View view = super.getView(position, convertView, parent);
 
@@ -930,15 +945,16 @@ public class MainActivity extends AppCompatActivity {
                 whichCommand = 0;
             }
 
-            String send = tryCommands[whichCommand];
-            sendEcuMessage(send);
+            trysend = tryCommands[whichCommand];
+            sendEcuMessage(trysend);
 
             if (whichCommand == tryCommands.length - 1) {
                 whichCommand = -1;
             } else {
                 whichCommand++;
             }
-            Info.setText(send);
+
+            Info.setText(trysend);
         }
     }
 
@@ -1019,11 +1035,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkEcuConnection(String tmpmsg) {
 
+        if(resetactive)
+        {
+            return;
+        }
+
         Info.setText(tmpmsg);
 
         getElmInfo(tmpmsg);
 
-        if (tmpmsg.contains("0100")) {
+        //if (tmpmsg.contains("0100") || tmpmsg.contains(RSP_ID.NOCONN.response) || tmpmsg.contains(RSP_ID.NOCONN2.response))
+        if (trysend != null && trysend.contains("0100")) {
+
             if (isHexadecimal(tmpmsg)) {
                 ecuok = true;
                 Toast.makeText(this, RSP_ID.CONNECTED.response, Toast.LENGTH_LONG).show();
@@ -1043,8 +1066,10 @@ public class MainActivity extends AppCompatActivity {
                     || tmpmsg.contains(RSP_ID.UNKNOWN.response)
                     ) {
                 ecuok = false;
+
                 if (ecutrycount < 2) {
                     sendEcuMessage("0100");
+                    trysend = "0100";
                     ecutrycount++;
                     return;
                 } else {
@@ -1074,20 +1099,6 @@ public class MainActivity extends AppCompatActivity {
         tmpmsg = tmpmsg.replaceAll("atrv", "");
 
         return tmpmsg;
-    }
-
-    private void resetItems() {
-        engineLoad.setText("0 %");
-        voltage.setText("0 V");
-        coolantTemperature.setText("0 C°");
-        Info.setText("");
-        airTemperature.setText("0 C°");
-        Maf.setText("0 g/s");
-        Fuel.setText("0 - 0 l/h");
-        initialized = false;
-        m_getPids = false;
-        whichCommand = -1;
-        trycount = 0;
     }
 
     private void checkPids(String tmpmsg) {
@@ -1131,10 +1142,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            try{
+            try {
                 analysPIDS(tmpmsg);
-            }catch(Exception e)
-            {
+            } catch (Exception e) {
                 Info.setText("Error : " + e.getMessage());
             }
 

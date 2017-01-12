@@ -265,12 +265,11 @@ public class BluetoothService {
             BluetoothServerSocket tmp = null;
 
             // Create a new listening server socket
-//            try {
-//                    tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME,
-//                        MY_UUID);
-//            } catch (IOException e) {
-//                Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e);
-//            }
+            try {
+                    tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME,MY_UUID);
+            } catch (IOException e) {
+                Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e);
+            }
             mmServerSocket = tmp;
         }
 
@@ -346,8 +345,7 @@ public class BluetoothService {
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
-                tmp = device.createRfcommSocketToServiceRecord(
-                        MY_UUID);
+                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
