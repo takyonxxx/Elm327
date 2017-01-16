@@ -9,7 +9,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 
 import java.io.IOException;
@@ -17,7 +16,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ObdWifiManager {
 
@@ -30,8 +28,6 @@ public class ObdWifiManager {
     private final Context mContext;
     private final HandlerThread mOBDThread;
     private final Handler mOBDHandler;
-    protected ConcurrentLinkedQueue<ConnectionListener> mConnectionListeners = new ConcurrentLinkedQueue<>();
-    protected Handler mUIHandler = new Handler(Looper.getMainLooper());
     private Socket mSocket;
     private boolean mConnecting = false;
     private WifiManager.WifiLock wifiLock;
@@ -44,29 +40,12 @@ public class ObdWifiManager {
                 mSocket = new Socket();
                 mSocket.connect(new InetSocketAddress("192.168.0.10", 35000), 5000);
 
-                mUIHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (ConnectionListener listener : mConnectionListeners) {
-                            listener.onConnected();
-                        }
-                    }
-                });
-
                 setState(STATE_CONNECTED);
 
                 mConnecting = false;
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
-                mUIHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (ConnectionListener listener : mConnectionListeners) {
-                            listener.onDisconnected();
-                        }
-                    }
-                });
             }
             mConnecting = false;
             mOBDHandler.postDelayed(mConnectRunnable, 10000);
@@ -101,14 +80,7 @@ public class ObdWifiManager {
         if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("link") || name.contains("LINK"))) {
             mConnecting = true;
             setState(STATE_CONNECTING);
-            mUIHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    for (ConnectionListener listener : mConnectionListeners) {
-                        listener.onConnecting();
-                    }
-                }
-            });
+
             mOBDHandler.removeCallbacksAndMessages(null);
             mOBDHandler.post(mConnectRunnable);
             return true;
@@ -135,14 +107,6 @@ public class ObdWifiManager {
                         Log.d(TAG, "disconnect: " + Log.getStackTraceString(e));
                     }
                 }
-                mUIHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (ConnectionListener listener : mConnectionListeners) {
-                            listener.onDisconnected();
-                        }
-                    }
-                });
             }
         });
     }
@@ -170,14 +134,6 @@ public class ObdWifiManager {
 
     public boolean isConnected() {
         return (mSocket != null && mSocket.isConnected());
-    }
-
-    public interface ConnectionListener {
-        void onConnected();
-
-        void onDisconnected();
-
-        void onConnecting();
     }
 
 }

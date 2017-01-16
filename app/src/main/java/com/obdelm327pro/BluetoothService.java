@@ -231,6 +231,7 @@ public class BluetoothService {
         bundle.putString(MainActivity.TOAST, "Unable to connect device");
         msg.setData(bundle);
         mHandler.sendMessage(msg);
+        setState(STATE_NONE);
 
         // Start the service over to restart listening mode
         BluetoothService.this.start();

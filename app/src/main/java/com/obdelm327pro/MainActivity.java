@@ -101,14 +101,15 @@ public class MainActivity extends AppCompatActivity {
     GaugeSpeed speed;
     GaugeRpm rpm;
     BluetoothDevice currentdevice;
-    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false, ecuok = false, resetactive = false;
-    String devicename = null, deviceprotocol = null, lastsend = null;
-    String[] tryCommands;
+    boolean commandmode = false, initialized = false, m_getPids = false, tryconnect = false, defaultStart = false;
+    String devicename = null, deviceprotocol = null;
+
     String[] initializeCommands;
     Intent serverIntent = null;
     TroubleCodes troubleCodes;
     String VOLTAGE = "ATRV",
             PROTOCOL = "ATDP",
+            RESET = "ATZ",
             ENGINE_COOLANT_TEMP = "0105",  //A-40
             ENGINE_RPM = "010C",  //((A*256)+B)/4
             ENGINE_LOAD = "0104",  // A*100/255
@@ -137,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
     private String mConnectedDeviceName = "Ecu";
     private int rpmval = 0, intakeairtemp = 0, ambientairtemp = 0, coolantTemp = 0,
             engineoiltemp = 0, b1s1temp = 0, Enginetype = 0, FaceColor = 0,
-            whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0, ecutrycount = 0;
+            whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0;
     private double Enginedisplacement = 1500;
     // Local Bluetooth adapter
     private BluetoothAdapter mBluetoothAdapter = null;
@@ -198,9 +199,8 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             tryconnect = false;
-                            resetactive = false;
                             resetvalues();
-                            sendEcuMessage("ATD");
+                            sendEcuMessage(RESET);
 
                             break;
                         case BluetoothService.STATE_CONNECTING:
@@ -242,13 +242,22 @@ public class MainActivity extends AppCompatActivity {
 
                     String tmpmsg = clearMsg(msg);
 
-                    if (commandmode || !initialized) {
-                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
+                    Info.setText(tmpmsg);
+
+                    if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
+
+                        try{
+                            String command = tmpmsg.substring(0,4);
+                            if(isHexadecimal(command))
+                            {
+                                removePID(command);
+                            }
+                        }catch(Exception e)
+                        {}
                     }
 
-                    if (!ecuok) {
-                        checkEcuConnection(tmpmsg);
-                        return;
+                    if (commandmode || !initialized) {
+                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
                     }
 
                     analysMsg(msg);
@@ -265,6 +274,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void removePID(String pid)
+    {
+        int index = commandslist.indexOf(pid);
+        if (index != -1)
+        {
+            commandslist.remove(index);
+            Info.setText("Removed pid: " + pid);
+        }
+    }
+
     // The action listener for the EditText widget, to listen for the return key
     private TextView.OnEditorActionListener mWriteListener =
             new TextView.OnEditorActionListener() {
@@ -365,9 +385,7 @@ public class MainActivity extends AppCompatActivity {
         //ATSTFF Set time out to maximum
         //ATSTHH Set timeout to 4ms
 
-        tryCommands = new String[]{"ATZ", "ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
-
-        initializeCommands = new String[]{"ATI", "ATDP", "ATRV"};
+        initializeCommands = new String[]{"ATZ", "ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "ATSP0"};
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -557,6 +575,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public synchronized void onResume() {
         super.onResume();
+        getPreferences();
     }
 
     @Override
@@ -634,7 +653,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getPreferences() {
-        try {
+
             SharedPreferences preferences = PreferenceManager
                     .getDefaultSharedPreferences(getBaseContext());
 
@@ -652,20 +671,13 @@ public class MainActivity extends AppCompatActivity {
 
             m_dedectPids = Integer.parseInt(preferences.getString("DedectPids", "0"));
 
-            rpm.refreshDrawableState();
-            speed.refreshDrawableState();
-            rpm.invalidate();
-            speed.invalidate();
-
             if (m_dedectPids == 0) {
+
                 commandslist.clear();
 
                 int i = 0;
 
-                if (preferences.getBoolean("checkboxVOLTAGE", true)) {
-                    commandslist.add(i, VOLTAGE);
-                    i++;
-                }
+                commandslist.add(i, VOLTAGE);
 
                 if (preferences.getBoolean("checkboxENGINE_RPM", true)) {
                     commandslist.add(i, ENGINE_RPM);
@@ -696,22 +708,8 @@ public class MainActivity extends AppCompatActivity {
                     commandslist.add(i, MAF_AIR_FLOW);
                 }
 
-                if (preferences.getBoolean("checkboxINTAKE_MAN_PRESSURE", true)) {
-                    commandslist.add(i, INTAKE_MAN_PRESSURE);
-                }
-
-                if (preferences.getBoolean("checkboxENGINE_OIL_TEMP", true)) {
-                    commandslist.add(i, ENGINE_OIL_TEMP);
-                }
-
-                if (preferences.getBoolean("checkboxFUEL_RAIL_PRESSURE", true)) {
-                    commandslist.add(i, FUEL_RAIL_PRESSURE);
-                }
                 whichCommand = 0;
             }
-
-        } catch (Exception e) {
-        }
     }
 
     private void setDefaultOrientation() {
@@ -720,16 +718,6 @@ public class MainActivity extends AppCompatActivity {
 
             settextsixe();
             setgaugesize();
-
-        } catch (Exception e) {
-        }
-    }
-
-    private void hideVirturalKeyboard() {
-        try {
-
-            InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
         } catch (Exception e) {
         }
@@ -878,8 +866,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void resetvalues() {
 
-        resetactive = true;
-
         engineLoad.setText("0 %");
         voltage.setText("0 V");
         coolantTemperature.setText("0 C°");
@@ -887,23 +873,22 @@ public class MainActivity extends AppCompatActivity {
         airTemperature.setText("0 C°");
         Maf.setText("0 g/s");
         Fuel.setText("0 - 0 l/h");
-        initialized = false;
+
         m_getPids = false;
-        whichCommand = -1;
+        whichCommand = 0;
         trycount = 0;
+        initialized = false;
+        defaultStart = false;
         avgconsumption.clear();
         mConversationArrayAdapter.clear();
-        ecuok = false;
-        ecutrycount = 0;
 
         resetgauges();
 
-        sendEcuMessage("ATZ");
-
-        resetactive = false;
+        sendEcuMessage(RESET);
     }
 
     private void connectDevice(Intent data) {
+        tryconnect = true;
         // Get the device MAC address
         String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
         // Get the BluetoothDevice object
@@ -911,7 +896,6 @@ public class MainActivity extends AppCompatActivity {
         try {
             // Attempt to connect to the device
             mChatService.connect(device);
-            tryconnect = true;
             currentdevice = device;
 
         } catch (Exception e) {
@@ -969,25 +953,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void sendTryCommands() {
-        if (tryCommands.length != 0) {
 
-            if (whichCommand < 0) {
-                whichCommand = 0;
-            }
-
-            trysend = tryCommands[whichCommand];
-            sendEcuMessage(trysend);
-
-            if (whichCommand == tryCommands.length - 1) {
-                whichCommand = -1;
-            } else {
-                whichCommand++;
-            }
-
-            Info.setText(trysend);
-        }
-    }
 
     private void sendInitCommands() {
         if (initializeCommands.length != 0) {
@@ -1001,115 +967,30 @@ public class MainActivity extends AppCompatActivity {
 
             if (whichCommand == initializeCommands.length - 1) {
                 initialized = true;
-                whichCommand = -1;
+                whichCommand = 0;
                 sendDefaultCommands();
             } else {
                 whichCommand++;
             }
-
-            Info.setText(send);
         }
     }
 
     private void sendDefaultCommands() {
 
-        try {
-            if (commandslist.size() != 0) {
+        if (commandslist.size() != 0) {
 
-                if (whichCommand < 0) {
-                    whichCommand = 0;
-                }
-
-                String send = commandslist.get(whichCommand);
-                sendEcuMessage(send);
-
-                if (whichCommand >= commandslist.size() - 1) {
-                    whichCommand = 0;
-                } else {
-                    whichCommand++;
-                }
-            }
-        } catch (Exception e) {
-            sendEcuMessage(VOLTAGE);
-        }
-    }
-
-    private char firstChar(int hex) {
-        int b = hex / 4;
-        switch (b) {
-            case 0:
-                return 'P';
-            case 1:
-                return 'C';
-            case 2:
-                return 'B';
-            case 3:
-                return 'U';
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private char secondChar(int hex) {
-        int b = hex % 4;
-        switch (b) {
-            case 0:
-                return '0';
-            case 1:
-                return '1';
-            case 2:
-                return '2';
-            case 3:
-                return '3';
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private void checkEcuConnection(String tmpmsg) {
-
-        if(resetactive)
-        {
-            return;
-        }
-
-        Info.setText(tmpmsg);
-
-        getElmInfo(tmpmsg);
-
-        //if (tmpmsg.contains("0100") || tmpmsg.contains(RSP_ID.NOCONN.response) || tmpmsg.contains(RSP_ID.NOCONN2.response))
-        if (trysend != null && trysend.contains("0100")) {
-
-            if (isHexadecimal(tmpmsg)) {
-                ecuok = true;
-                Toast.makeText(this, RSP_ID.CONNECTED.response, Toast.LENGTH_LONG).show();
-                sendInitCommands();
-                return;
+            if (whichCommand < 0) {
+                whichCommand = 0;
             }
 
-            if (tmpmsg.contains(RSP_ID.NOCONN.response)
-                    || tmpmsg.contains(RSP_ID.NOCONN2.response)
-                    || tmpmsg.contains(RSP_ID.ERROR.response)
-                    || tmpmsg.contains(RSP_ID.NODATA.response)
-                    || tmpmsg.contains(RSP_ID.BUSY.response)
-                    || tmpmsg.contains(RSP_ID.QMARK.response)
-                    || tmpmsg.contains(RSP_ID.STOPPED.response)
-                    || tmpmsg.contains(RSP_ID.BUS.response)
-                    || tmpmsg.contains(RSP_ID.OK.response)
-                    || tmpmsg.contains(RSP_ID.UNKNOWN.response)
-                    ) {
-                ecuok = false;
+            String send = commandslist.get(whichCommand);
+            sendEcuMessage(send);
 
-                if (ecutrycount < 2) {
-                    sendEcuMessage("0100");
-                    trysend = "0100";
-                    ecutrycount++;
-                    return;
-                } else {
-                    ecutrycount = 0;
-                    sendTryCommands();
-                }
+            if (whichCommand >= commandslist.size() - 1) {
+                whichCommand = 0;
+            } else {
+                whichCommand++;
             }
-        } else {
-            sendTryCommands();
         }
     }
 
@@ -1152,9 +1033,9 @@ public class MainActivity extends AppCompatActivity {
 
         generateVolt(tmpmsg);
 
-        if (!initialized) {
+        getElmInfo(tmpmsg);
 
-            getElmInfo(tmpmsg);
+        if (!initialized) {
 
             sendInitCommands();
 
@@ -1179,75 +1060,46 @@ public class MainActivity extends AppCompatActivity {
                 Info.setText("Error : " + e.getMessage());
             }
 
-            checkData(tmpmsg);
-
             sendDefaultCommands();
-        }
-    }
-
-    private void checkData(String tmpmsg) {
-        try {
-
-            if (whichCommand != 0) {
-
-                lastsend = commandslist.get(whichCommand - 1);
-
-                Info.setText(lastsend + " : " + tmpmsg);
-
-                if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
-                    commandslist.remove(whichCommand - 1);
-                    Info.setText("Removing pid: " + lastsend);
-                }
-
-            } else {
-
-                lastsend = commandslist.get(commandslist.size() - 1);
-
-                Info.setText(lastsend + " : " + tmpmsg);
-
-                if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
-                    commandslist.remove(commandslist.size() - 1);
-                    Info.setText("Removing pid: " + lastsend);
-                }
-            }
-
-        } catch (Exception e) {
         }
     }
 
     private void getFaultInfo(String tmpmsg) {
 
-        int index = tmpmsg.indexOf("43");
+        try{
+            int index = tmpmsg.indexOf("43");
 
-        if (index != -1) {
+            if (index != -1) {
 
-            tmpmsg = tmpmsg.substring(index, tmpmsg.length());
+                tmpmsg = tmpmsg.substring(index, tmpmsg.length());
 
-            if (tmpmsg.substring(0, 2).equals("43")) {
+                if (tmpmsg.substring(0, 2).equals("43")) {
 
-                performCalculations(tmpmsg);
+                    performCalculations(tmpmsg);
 
-                String faultCode = null;
-                String faultDesc = null;
+                    String faultCode = null;
+                    String faultDesc = null;
 
-                if (troubleCodesArray.size() > 0) {
-                    for (int i = 0; i < troubleCodesArray.size(); i++) {
-                        faultCode = troubleCodesArray.get(i);
-                        faultDesc = troubleCodes.getFaultCode(faultCode);
+                    if (troubleCodesArray.size() > 0) {
+                        for (int i = 0; i < troubleCodesArray.size(); i++) {
+                            faultCode = troubleCodesArray.get(i);
+                            faultDesc = troubleCodes.getFaultCode(faultCode);
 
-                        if (faultCode != null && faultDesc != null) {
-                            mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode + "\n" + faultDesc);
-                        } else if (faultCode != null && faultDesc == null) {
-                            mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode +
-                                    "\n" + "No description found for code: " + faultCode);
+                            if (faultCode != null && faultDesc != null) {
+                                mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode + "\n" + faultDesc);
+                            } else if (faultCode != null && faultDesc == null) {
+                                mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode +
+                                        "\n" + "No description found for code: " + faultCode);
+                            }
                         }
+                    } else {
+                        faultCode = "No error found...";
+                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode);
                     }
-                } else {
-                    faultCode = "No error found...";
-                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode);
                 }
             }
-        }
+        }catch(Exception e)
+        {}
     }
 
     protected void performCalculations(String fault) {
@@ -1367,7 +1219,7 @@ public class MainActivity extends AppCompatActivity {
             }
             m_getPids = true;
             mConversationArrayAdapter.add(mConnectedDeviceName + ": " + supportedPID.toString());
-            whichCommand = -1;
+            whichCommand = 0;
             sendEcuMessage("ATRV");
 
         } else {
