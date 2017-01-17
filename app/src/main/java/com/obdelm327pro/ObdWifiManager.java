@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +33,10 @@ public class ObdWifiManager {
     private boolean mConnecting = false;
     private WifiManager.WifiLock wifiLock;
     private int mState;
+
+    OutputStream outStream;
+    InputStream inStream;
+
     private Runnable mConnectRunnable = new Runnable() {
         @Override
         public void run() {
@@ -59,6 +64,10 @@ public class ObdWifiManager {
         mOBDHandler = handler;//new Handler(mOBDThread.getLooper());
     }
 
+    public synchronized int getState() {
+        return mState;
+    }
+
     private synchronized void setState(int state) {
 
         mState = state;
@@ -67,25 +76,34 @@ public class ObdWifiManager {
     }
 
     public boolean connect() {
+
+
         if (mConnecting || isConnected()) {
             return false;
         }
+
         WifiManager wifi = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         if (wifiLock == null) {
             this.wifiLock = wifi.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "HighPerf wifi lock");
         }
+
         wifiLock.acquire();
         WifiInfo wifiInfo = wifi.getConnectionInfo();
         String name = wifiInfo.getSSID();
+
+        Toast.makeText(mContext,"Available wifi : " + name, Toast.LENGTH_SHORT).show();
+
         if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("link") || name.contains("LINK"))) {
             mConnecting = true;
             setState(STATE_CONNECTING);
 
             mOBDHandler.removeCallbacksAndMessages(null);
             mOBDHandler.post(mConnectRunnable);
+
             return true;
         }
         mConnecting = false;
+
         return false;
     }
 
@@ -116,7 +134,8 @@ public class ObdWifiManager {
         byte b;
         InputStream in = mSocket.getInputStream();
         OutputStream out = mSocket.getOutputStream();
-        out.write((command + '\r').getBytes());
+        command = command + '\r';
+        out.write(command.getBytes());
         out.flush();
         mOBDHandler.obtainMessage(MainActivity.MESSAGE_WRITE, command.length(), -1, command).sendToTarget();
         StringBuilder res = new StringBuilder();
@@ -134,6 +153,45 @@ public class ObdWifiManager {
 
     public boolean isConnected() {
         return (mSocket != null && mSocket.isConnected());
+    }
+
+    public void sendDataToOBD(String command) {
+        try {
+            if(mSocket != null)
+            {
+                outStream = mSocket.getOutputStream();
+                command = command + '\r';
+                byte[] arrayOfBytes = command.getBytes();
+                outStream.write(arrayOfBytes);
+                outStream.flush();
+                mOBDHandler.obtainMessage(MainActivity.MESSAGE_WRITE, command.length(), -1, command).sendToTarget();
+            }
+
+        } catch (Exception localIOException1) {
+            localIOException1.printStackTrace();
+        }
+    }
+
+    public void readDataFromOBD() {
+        while (true) {
+            try {
+                if(mSocket != null)
+                {
+                    inStream = mSocket.getInputStream();
+                    String str1 = "";
+                    char c = (char) inStream.read();
+                    str1 = str1 + c;
+                    if (c == '>') {
+                        String datafromOBD = str1.substring(0, -2 + str1.length()).replaceAll(" ", "").trim();
+                        mOBDHandler.obtainMessage(MainActivity.MESSAGE_READ, datafromOBD.length(), -1, datafromOBD).sendToTarget();
+                    }
+                }
+
+            } catch (IOException localIOException) {
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

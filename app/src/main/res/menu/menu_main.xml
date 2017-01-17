@@ -3,9 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.tbiliyor.obdelm327pro.MainActivity">
 
-    <item android:id="@+id/menu_connect_scan" android:title="@string/connect"/>
+    <item android:id="@+id/menu_connect_bt" android:title="@string/connectbt"/>
+    <item android:id="@+id/menu_connect_wifi" android:title="@string/connectwifi"/>
     <item android:id="@+id/menu_reset" android:title="@string/reset"/>
-    <item android:id="@+id/menu_command" android:title="@string/command" />
+    <item android:id="@+id/menu_terminal" android:title="@string/terminal" />
     <item android:id="@+id/menu_settings" android:title="@string/action_settings" />
     <item android:id="@+id/menu_exit" android:title="@string/exit" />
 
