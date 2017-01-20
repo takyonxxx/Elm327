@@ -45,7 +45,7 @@ public class BluetoothService {
     private static final UUID MY_UUID = UUID.fromString("0001101-0000-1000-8000-00805F9B34FB");
     // Member fields
     private final BluetoothAdapter mAdapter;
-    private final Handler mHandler;
+    private final Handler mBTHandler;
     private AcceptThread mAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
@@ -60,7 +60,7 @@ public class BluetoothService {
     public BluetoothService(Context context, Handler handler) {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
-        mHandler = handler;
+        mBTHandler = handler;
     }
 
     /**
@@ -80,7 +80,7 @@ public class BluetoothService {
         mState = state;
 
         // Give the new state to the Handler so the UI Activity can update
-        mHandler.obtainMessage(MainActivity.MESSAGE_STATE_CHANGE, state, -1).sendToTarget();
+        mBTHandler.obtainMessage(MainActivity.MESSAGE_STATE_CHANGE, state, -1).sendToTarget();
     }
 
     /**
@@ -171,11 +171,11 @@ public class BluetoothService {
         mConnectedThread.start();
 
         // Send the name of the connected device back to the UI Activity
-        Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME);
+        Message msg = mBTHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME);
         Bundle bundle = new Bundle();
         bundle.putString(MainActivity.DEVICE_NAME, device.getName());
         msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        mBTHandler.sendMessage(msg);
 
         setState(STATE_CONNECTED);
     }
@@ -226,11 +226,11 @@ public class BluetoothService {
      */
     private void connectionFailed() {
         // Send a failure message back to the Activity
-        Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
+        Message msg = mBTHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
         bundle.putString(MainActivity.TOAST, "Unable to connect device");
         msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        mBTHandler.sendMessage(msg);
         setState(STATE_NONE);
 
         // Start the service over to restart listening mode
@@ -242,11 +242,11 @@ public class BluetoothService {
      */
     private void connectionLost() {
         // Send a failure message back to the Activity
-        Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
+        Message msg = mBTHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
         bundle.putString(MainActivity.TOAST, "Device connection was lost");
         msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        mBTHandler.sendMessage(msg);
 
         // Start the service over to restart listening mode
         BluetoothService.this.start();
@@ -435,7 +435,7 @@ public class BluetoothService {
                         msg = msg + x;
                         //if (x == 0x3e) {
                         if (msg.contains(">")) {
-                            mHandler.obtainMessage(MainActivity.MESSAGE_READ, buffer.length, -1, msg).sendToTarget();
+                            mBTHandler.obtainMessage(MainActivity.MESSAGE_READ, buffer.length, -1, msg).sendToTarget();
                             msg = "";
                         }
                     }
@@ -451,40 +451,16 @@ public class BluetoothService {
 
         public void write(byte[] buffer) {
             try {
-                mmOutStream.write(buffer);
 
+                byte[] arrayOfBytes = buffer;
+                mmOutStream.write(arrayOfBytes);
+                mmOutStream.flush();
                 // Share the sent message back to the UI Activity
-                mHandler.obtainMessage(MainActivity.MESSAGE_WRITE, -1, -1, buffer)
-                        .sendToTarget();
+                mBTHandler.obtainMessage(MainActivity.MESSAGE_WRITE, -1, -1, buffer).sendToTarget();
+
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }
-        }
-
-        protected void readRawData(InputStream in) throws IOException {
-            byte b;
-            StringBuilder res = new StringBuilder();
-
-            // read until '>' arrives OR end of stream reached (and skip ' ')
-            char c;
-            while (true) {
-                b = (byte) in.read();
-                if (b == -1) // -1 if the end of the stream is reached
-                {
-                    break;
-                }
-                c = (char) b;
-                if (c == '>') // read until '>' arrives
-                {
-                    break;
-                }
-                if (c != ' ') // skip ' '
-                {
-                    res.append(c);
-                }
-            }
-
-            msg = res.toString().trim();
         }
 
         public void cancel() {
@@ -495,4 +471,5 @@ public class BluetoothService {
             }
         }
     }
+
 }

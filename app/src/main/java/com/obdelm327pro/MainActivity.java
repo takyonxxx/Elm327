@@ -144,8 +144,9 @@ public class MainActivity extends AppCompatActivity {
     // Member object for the chat services
     private BluetoothService mBtService = null;
     private ObdWifiManager mWifiService = null;
-    // String buffer for outgoing messages
-    private StringBuffer mOutStringBuffer;
+
+    StringBuilder inStream = new StringBuilder();
+
     // The Handler that gets information back from the BluetoothChatService
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
@@ -158,36 +159,81 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_STATE_CHANGE:
 
                     switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
-                           // Status.setText(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            Info.setText(R.string.title_connected);
+                        case ObdWifiManager.STATE_CONNECTED:
+                            Status.setText(getString(R.string.title_connected_to, "ELM327 WIFI"));
                             try {
                                 itemtemp = menu.findItem(R.id.menu_connect_wifi);
                                 itemtemp.setTitle(R.string.disconnectwifi);
                             } catch (Exception e) {
                             }
+                            tryconnect = false;
+                            resetvalues();
+                            sendEcuMessage(RESET);
 
                             break;
-                        case BluetoothService.STATE_CONNECTING:
+                        case ObdWifiManager.STATE_CONNECTING:
                             Status.setText(R.string.title_connecting);
                             Info.setText(R.string.tryconnectbt);
                             break;
-                        case BluetoothService.STATE_NONE:
-
+                        case ObdWifiManager.STATE_NONE:
                             Status.setText(R.string.title_not_connected);
                             itemtemp = menu.findItem(R.id.menu_connect_wifi);
                             itemtemp.setTitle(R.string.connectwifi);
+                            if (mWifiService != null)mWifiService.disconnect();
+                            mWifiService = null;
 
+                            resetvalues();
                             break;
                     }
                     break;
                 case MESSAGE_WRITE:
+
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    String writeMessage = new String(writeBuf);
+
+                    if (commandmode || !initialized) {
+                        mConversationArrayAdapter.add("Command:  " + writeMessage);
+                    }
+
                     break;
 
                 case MESSAGE_READ:
+
+                    String tmpmsg = clearMsg(msg);
+
+                    Info.setText(tmpmsg);
+
+                    if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
+
+                        try{
+                            String command = tmpmsg.substring(0,4);
+
+                            if(isHexadecimal(command))
+                            {
+                                removePID(command);
+                            }
+
+                        }catch(Exception e)
+                        {
+                            Toast.makeText(getApplicationContext(), e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    if (commandmode || !initialized) {
+                        mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
+                    }
+
+                    analysMsg(msg);
                     break;
 
                 case MESSAGE_DEVICE_NAME:
+                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
+                    break;
+
+                case MESSAGE_TOAST:
+                    Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
+                            Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -517,6 +563,15 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.menu_connect_bt:
 
+                if( mWifiService != null)
+                {
+                    if (mWifiService.isConnected())
+                    {
+                        Toast.makeText(this, "First Disconnect WIFI Device.", Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                }
+
                 if (item.getTitle().equals("ConnectBT")) {
                     // Launch the DeviceListActivity to see devices and do scan
                     serverIntent = new Intent(this, DeviceListActivity.class);
@@ -632,6 +687,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         if (mBtService != null) mBtService.stop();
+        if (mWifiService != null)mWifiService.disconnect();
 
         wl.release();
     }
@@ -972,32 +1028,43 @@ public class MainActivity extends AppCompatActivity {
         // Initialize the BluetoothChatService to perform bluetooth connections
         mBtService = new BluetoothService(this, mBtHandler);
 
-        // Initialize the buffer for outgoing messages
-        mOutStringBuffer = new StringBuffer("");
     }
 
     private void sendEcuMessage(String message) {
-        // Check that we're actually connected before trying anything
-        if (mBtService.getState() != BluetoothService.STATE_CONNECTED) {
-            //Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show();
-            return;
-        }
-        try {
-            if (message.length() > 0) {
 
-                message = message + "\r";
-                // Get the message bytes and tell the BluetoothChatService to write
-                byte[] send = message.getBytes();
-                mBtService.write(send);
-                // Reset out string buffer to zero and clear the edit text field
-                mOutStringBuffer.setLength(0);
-                //mOutEditText.setText(mOutStringBuffer);
+        if( mWifiService != null)
+        {
+            if(mWifiService.isConnected())
+            {
+                try {
+                    if (message.length() > 0) {
+                        message = message + "\r";
+                        byte[] send = message.getBytes();
+                        mWifiService.write(send);
+                    }
+                } catch (Exception e) {
+                }
             }
-        } catch (Exception e) {
+        }
+        else
+        {
+            // Check that we're actually connected before trying anything
+            if (mBtService.getState() != BluetoothService.STATE_CONNECTED) {
+                //Toast.makeText(this, R.string.not_connected, Toast.LENGTH_LONG).show();
+                return;
+            }
+            try {
+                if (message.length() > 0) {
+
+                    message = message + "\r";
+                    // Get the message bytes and tell the BluetoothChatService to write
+                    byte[] send = message.getBytes();
+                    mBtService.write(send);
+                }
+            } catch (Exception e) {
+            }
         }
     }
-
-
 
     private void sendInitCommands() {
         if (initializeCommands.length != 0) {
@@ -1198,6 +1265,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (deviceprotocol != null && devicename != null) {
+            devicename = devicename.replaceAll("STOPPED", "");
+            deviceprotocol = deviceprotocol.replaceAll("STOPPED", "");
             Status.setText(devicename + " " + deviceprotocol);
         }
     }
