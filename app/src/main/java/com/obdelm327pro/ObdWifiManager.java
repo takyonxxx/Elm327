@@ -164,6 +164,7 @@ public class ObdWifiManager {
 
     public boolean connect() {
 
+        setState(STATE_CONNECTING);
 
         if (mConnecting || isConnected()) {
             return false;
@@ -180,7 +181,6 @@ public class ObdWifiManager {
 
         if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("link") || name.contains("LINK"))) {
             mConnecting = true;
-            setState(STATE_CONNECTING);
             deviceName = name.replace("\"","");
 
             mWIFIHandler.removeCallbacksAndMessages(null);
@@ -188,8 +188,9 @@ public class ObdWifiManager {
 
             return true;
         }
-        mConnecting = false;
+        setState(STATE_NONE);
 
+        mConnecting = false;
         return false;
     }
 
@@ -207,7 +208,7 @@ public class ObdWifiManager {
                     try {
                         mSocket.close();
                         mSocket = null;
-                        connectionLost();
+                        setState(STATE_NONE);
                     } catch (Exception e) {
                         Log.d(TAG, "disconnect: " + Log.getStackTraceString(e));
                     }

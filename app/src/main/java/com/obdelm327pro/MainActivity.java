@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case ObdWifiManager.STATE_CONNECTING:
                             Status.setText(R.string.title_connecting);
-                            Info.setText(R.string.tryconnectbt);
+                            Info.setText(R.string.tryconnectwifi);
                             break;
                         case ObdWifiManager.STATE_NONE:
                             Status.setText(R.string.title_not_connected);
@@ -454,22 +454,14 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
-            finish();
-
-            return;
         }
-        if (mBtService != null) {
-            if (mBtService.getState() == BluetoothService.STATE_NONE) {
-                mBtService.start();
+        else
+        {
+            if (mBtService != null) {
+                if (mBtService.getState() == BluetoothService.STATE_NONE) {
+                    mBtService.start();
+                }
             }
-        }
-
-
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        } else {
-            if (mBtService == null) setupChat();
         }
 
         mPidsButton.setOnClickListener(new View.OnClickListener() {
@@ -572,6 +564,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                if (!mBluetoothAdapter.isEnabled()) {
+                    Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+                    return false;
+                }
+
+                if (mBtService == null) setupChat();
+
                 if (item.getTitle().equals("ConnectBT")) {
                     // Launch the DeviceListActivity to see devices and do scan
                     serverIntent = new Intent(this, DeviceListActivity.class);
@@ -654,6 +654,9 @@ public class MainActivity extends AppCompatActivity {
 
                 if (resultCode == MainActivity.RESULT_OK) {
                     if (mBtService == null) setupChat();
+
+                    serverIntent = new Intent(this, DeviceListActivity.class);
+                    startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
                 } else {
                     Toast.makeText(this, "BT not enabled", Toast.LENGTH_SHORT).show();
                     if (mBtService == null) setupChat();
