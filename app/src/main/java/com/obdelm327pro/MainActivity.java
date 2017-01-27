@@ -453,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
-            Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Bluetooth is not available", Toast.LENGTH_LONG).show();
         }
         else
         {
@@ -463,6 +463,27 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
+        // Initialize the array adapter for the conversation thread
+        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                // Get the Item from ListView
+                View view = super.getView(position, convertView, parent);
+
+                // Initialize a TextView for ListView each Item
+                TextView tv = (TextView) view.findViewById(R.id.listText);
+
+                // Set the text color of TextView (ListView Item)
+                tv.setTextColor(Color.parseColor("#3ADF00"));
+                tv.setTextSize(10);
+
+                // Generate ListView Item using TextView
+                return view;
+            }
+        };
+
+        mConversationView.setAdapter(mConversationArrayAdapter);
 
         mPidsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -559,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     if (mWifiService.isConnected())
                     {
-                        Toast.makeText(this, "First Disconnect WIFI Device.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "First Disconnect WIFI Device.", Toast.LENGTH_SHORT).show();
                         return false;
                     }
                 }
@@ -618,6 +639,7 @@ public class MainActivity extends AppCompatActivity {
                     invisiblecmd();
                     item.setTitle(R.string.terminal);
                     commandmode = false;
+                    sendEcuMessage(VOLTAGE);
                 }
                 return true;
 
@@ -652,14 +674,13 @@ public class MainActivity extends AppCompatActivity {
 
             case REQUEST_ENABLE_BT:
 
-                if (resultCode == MainActivity.RESULT_OK) {
-                    if (mBtService == null) setupChat();
+                if (mBtService == null) setupChat();
 
+                if (resultCode == MainActivity.RESULT_OK) {
                     serverIntent = new Intent(this, DeviceListActivity.class);
                     startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
                 } else {
-                    Toast.makeText(this, "BT not enabled", Toast.LENGTH_SHORT).show();
-                    if (mBtService == null) setupChat();
+                    Toast.makeText(getApplicationContext(), "BT device not enabled", Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
@@ -700,6 +721,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         getPreferences();
         setDefaultOrientation();
+        resetvalues();
     }
 
     @Override
@@ -911,18 +933,18 @@ public class MainActivity extends AppCompatActivity {
 
             lp.addRule(RelativeLayout.BELOW, findViewById(R.id.Load).getId());
             lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            lp.setMargins(0, 0, 75, 0);
+            lp.setMargins(0, 0, 50, 0);
             rpm.setLayoutParams(lp);
             rpm.getLayoutParams().height = height;
-            rpm.getLayoutParams().width = (int) (width - 150) / 2;
+            rpm.getLayoutParams().width = (int) (width - 100) / 2;
 
             lp = new RelativeLayout.LayoutParams(height, height);
             lp.addRule(RelativeLayout.BELOW, findViewById(R.id.Load).getId());
             lp.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            lp.setMargins(75, 0, 0, 0);
+            lp.setMargins(50, 0, 0, 0);
             speed.setLayoutParams(lp);
             speed.getLayoutParams().height = height;
-            speed.getLayoutParams().width = (int) (width - 150) / 2;
+            speed.getLayoutParams().width = (int) (width - 100) / 2;
 
         } else if (width < height) {
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(width, width);
@@ -1007,27 +1029,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupChat() {
 
-        // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                // Get the Item from ListView
-                View view = super.getView(position, convertView, parent);
-
-                // Initialize a TextView for ListView each Item
-                TextView tv = (TextView) view.findViewById(R.id.listText);
-
-                // Set the text color of TextView (ListView Item)
-                tv.setTextColor(Color.parseColor("#3ADF00"));
-                tv.setTextSize(10);
-
-                // Generate ListView Item using TextView
-                return view;
-            }
-        };
-
-        mConversationView.setAdapter(mConversationArrayAdapter);
-
         // Initialize the BluetoothChatService to perform bluetooth connections
         mBtService = new BluetoothService(this, mBtHandler);
 
@@ -1049,7 +1050,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        else
+        else if (mBtService != null)
         {
             // Check that we're actually connected before trying anything
             if (mBtService.getState() != BluetoothService.STATE_CONNECTED) {

@@ -113,7 +113,7 @@ public class ObdWifiManager {
         // Send a failure message back to the Activity
         Message msg = mWIFIHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putString(MainActivity.TOAST, "Unable to connect device");
+        bundle.putString(MainActivity.TOAST, "Unable to connect wifi device");
         msg.setData(bundle);
         mWIFIHandler.sendMessage(msg);
         setState(STATE_NONE);
@@ -123,7 +123,7 @@ public class ObdWifiManager {
         // Send a failure message back to the Activity
         Message msg = mWIFIHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putString(MainActivity.TOAST, "Device connection was lost");
+        bundle.putString(MainActivity.TOAST, "Wifi device connection was lost");
         msg.setData(bundle);
         mWIFIHandler.sendMessage(msg);
         setState(STATE_NONE);
@@ -179,7 +179,10 @@ public class ObdWifiManager {
         WifiInfo wifiInfo = wifi.getConnectionInfo();
         String name = wifiInfo.getSSID();
 
-        if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("link") || name.contains("LINK"))) {
+        if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("Obd") ||
+                name.contains("ELM") || name.contains("elm") || name.contains("Elm") ||
+                name.contains("ECU") || name.contains("ecu") || name.contains("Ecu") ||
+                name.contains("LINK") || name.contains("link") || name.contains("Link"))) {
             mConnecting = true;
             deviceName = name.replace("\"","");
 
@@ -188,6 +191,13 @@ public class ObdWifiManager {
 
             return true;
         }
+
+        Message msg = mWIFIHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
+        Bundle bundle = new Bundle();
+        bundle.putString(MainActivity.TOAST, "Unable to connect wifi device");
+        msg.setData(bundle);
+        mWIFIHandler.sendMessage(msg);
+
         setState(STATE_NONE);
 
         mConnecting = false;
