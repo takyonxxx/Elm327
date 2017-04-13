@@ -853,6 +853,7 @@ public class TroubleCodes {
             "P1157;Lack Of HO2S22 Switch - Sensor Indicates Lean",
             "P1158;Lack Of HO2S22 Switch - Sensor Indicates Rich",
             "P1159;Fuel Stepper Motor Malfunction",
+            "P1160;Turbo pressure signal",
             "P1167;Invalid Test,throttle not depressed",
             "P1168;Fuel Rail Sensor In-Range Low Failure",
             "P1169;Fuel Rail Sensor In-Range High Failure",
@@ -3418,6 +3419,7 @@ public class TroubleCodes {
             "U2152;SCP (J1850) Invalid Data from GEM",
             "U2160;SCP (J1850) Invalid Data from IC",
             "U2195;SCP (J1850) Invalid Data from SCLM",
-            "U2500;(CAN) Lack of Acknowledgement From Engine Management"
+            "U2500;(CAN) Lack of Acknowledgement From Engine Management",
+            "P003C;\"A\" Camshaft Profile Control Performance/Stuck Off Bank 1"
     };
 }

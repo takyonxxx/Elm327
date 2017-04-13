@@ -19,6 +19,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     public static final int MESSAGE_STATE_CHANGE = 1;
 
@@ -302,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
 
                     Info.setText(tmpmsg);
 
-                    if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
+                    /*if (tmpmsg.contains(RSP_ID.NODATA.response) || tmpmsg.contains(RSP_ID.ERROR.response)) {
 
                         try{
                             String command = tmpmsg.substring(0,4);
@@ -317,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), e.getMessage(),
                                 Toast.LENGTH_LONG).show();
                         }
-                    }
+                    }*/
 
                     if (commandmode || !initialized) {
                         mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + tmpmsg);
@@ -1181,14 +1184,21 @@ public class MainActivity extends AppCompatActivity {
 
     private void getFaultInfo(String tmpmsg) {
 
-        try{
-            int index = tmpmsg.indexOf("43");
+            String substr = "43";
+
+            int index = tmpmsg.indexOf(substr);
+
+            if (index == -1)
+            {
+                substr = "47";
+                index = tmpmsg.indexOf(substr);
+            }
 
             if (index != -1) {
 
                 tmpmsg = tmpmsg.substring(index, tmpmsg.length());
 
-                if (tmpmsg.substring(0, 2).equals("43")) {
+                if (tmpmsg.substring(0, 2).equals(substr)) {
 
                     performCalculations(tmpmsg);
 
@@ -1196,15 +1206,18 @@ public class MainActivity extends AppCompatActivity {
                     String faultDesc = null;
 
                     if (troubleCodesArray.size() > 0) {
+
                         for (int i = 0; i < troubleCodesArray.size(); i++) {
                             faultCode = troubleCodesArray.get(i);
                             faultDesc = troubleCodes.getFaultCode(faultCode);
+
+                            Log.e(TAG, "Fault Code: " + substr + " : " + faultCode + " desc: " + faultDesc);
 
                             if (faultCode != null && faultDesc != null) {
                                 mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode + "\n" + faultDesc);
                             } else if (faultCode != null && faultDesc == null) {
                                 mConversationArrayAdapter.add(mConnectedDeviceName + ":  TroubleCode -> " + faultCode +
-                                        "\n" + "No description found for code: " + faultCode);
+                                        "\n" + "Definition not found for code: " + faultCode);
                             }
                         }
                     } else {
@@ -1213,43 +1226,43 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        }catch(Exception e)
-        {}
     }
 
     protected void performCalculations(String fault) {
 
         final String result = fault;
-        String workingData;
-        int startIndex = 0;//Header size.
-
+        String workingData = "";
+        int startIndex = 0;
         troubleCodesArray.clear();
 
-        String canOneFrame = result.replaceAll("[\r\n]", "");
-        int canOneFrameLength = canOneFrame.length();
-        if (canOneFrameLength <= 16 && canOneFrameLength % 4 == 0) {//CAN(ISO-15765) protocol one frame.
-            workingData = canOneFrame;//43yy{codes}
-            startIndex = 4;//Header is 43yy, yy showing the number of data items.
-        } else if (result.contains(":")) {//CAN(ISO-15765) protocol two and more frames.
-            workingData = result.replaceAll("[\r\n].:", "");//xxx43yy{codes}
-            startIndex = 7;//Header is xxx43yy, xxx is bytes of information to follow, yy showing the number of data items.
-        } else {//ISO9141-2, KWP2000 Fast and KWP2000 5Kbps (ISO15031) protocols.
-            workingData = result.replaceAll("^43|[\r\n]43|[\r\n]", "");
-        }
-        for (int begin = startIndex; begin < workingData.length(); begin += 4) {
-            String dtc = "";
-            byte b1 = hexStringToByteArray(workingData.charAt(begin));
-            int ch1 = ((b1 & 0xC0) >> 6);
-            int ch2 = ((b1 & 0x30) >> 4);
-            dtc += dtcLetters[ch1];
-            dtc += hexArray[ch2];
-            dtc += workingData.substring(begin + 1, begin + 4);
+        try{
 
-            if (dtc.equals("P0000")) {
-                continue;
+            if(result.indexOf("43") != -1)
+            {
+                workingData = result.replaceAll("^43|[\r\n]43|[\r\n]", "");
+            }else if(result.indexOf("47") != -1)
+            {
+                workingData = result.replaceAll("^47|[\r\n]47|[\r\n]", "");
             }
 
-            troubleCodesArray.add(dtc);
+            for (int begin = startIndex; begin < workingData.length(); begin += 4) {
+                String dtc = "";
+                byte b1 = hexStringToByteArray(workingData.charAt(begin));
+                int ch1 = ((b1 & 0xC0) >> 6);
+                int ch2 = ((b1 & 0x30) >> 4);
+                dtc += dtcLetters[ch1];
+                dtc += hexArray[ch2];
+                dtc += workingData.substring(begin + 1, begin + 4);
+
+                if (dtc.equals("P0000")) {
+                    continue;
+                }
+
+                troubleCodesArray.add(dtc);
+            }
+        }catch(Exception e)
+        {
+            Log.e(TAG, "Error: " + e.getMessage());
         }
     }
 
@@ -1425,11 +1438,11 @@ public class MainActivity extends AppCompatActivity {
                 String consumption = null;
 
                 if (Enginetype == 0) {
-                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
+                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.3 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
                     avgconsumption.add((0.001 * 0.004 * 4 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
 
                 } else if (Enginetype == 1) {
-                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.5 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
+                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.3 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
                     avgconsumption.add((0.001 * 0.004 * 4 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
 
                 }
