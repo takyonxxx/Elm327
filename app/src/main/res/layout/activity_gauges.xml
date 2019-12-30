@@ -73,12 +73,13 @@
             android:textColor="#99FFFF"
             android:textSize="12sp"
             android:textStyle="bold" />
+
         <TextView
             android:id="@+id/Temp_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignRight="@+id/Center_text"
             android:layout_below="@+id/Status"
+            android:layout_alignRight="@+id/Center_text"
             android:gravity="left"
             android:text="  Tmp:  "
             android:textColor="#aaa"

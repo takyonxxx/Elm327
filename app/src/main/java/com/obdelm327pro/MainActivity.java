@@ -138,10 +138,10 @@ public class MainActivity extends AppCompatActivity {
     private ListView mConversationView;
     private TextView engineLoad, Fuel, voltage, coolantTemperature, Status, Loadtext, Volttext, Temptext, Centertext, Info, Airtemp_text, airTemperature, Maf_text, Maf;
     private String mConnectedDeviceName = "Ecu";
-    private int rpmval = 0, intakeairtemp = 0, ambientairtemp = 0, coolantTemp = 0,
+    private int rpmval = 0, intakeairtemp = 0, ambientairtemp = 0, coolantTemp = 0, mMaf = 0,
             engineoiltemp = 0, b1s1temp = 0, Enginetype = 0, FaceColor = 0,
             whichCommand = 0, m_dedectPids = 0, connectcount = 0, trycount = 0;
-    private double Enginedisplacement = 1500;
+    private int mEnginedisplacement = 1500;
     // Local Bluetooth adapter
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
@@ -790,12 +790,7 @@ public class MainActivity extends AppCompatActivity {
             rpm.setFace(FaceColor);
             speed.setFace(FaceColor);
 
-            Enginedisplacement = Integer.parseInt(preferences.getString("Enginedisplacement", "1400"));
-            Enginetype = Integer.parseInt(preferences.getString("EngineType", "0"));
-
-            Enginedisplacement = Enginedisplacement / 1000;
-
-            //Toast.makeText(this,String.valueOf(Enginedisplacement),Toast.LENGTH_SHORT).show();
+            mEnginedisplacement = Integer.parseInt(preferences.getString("Enginedisplacement", "1500"));
 
             m_dedectPids = Integer.parseInt(preferences.getString("DedectPids", "0"));
 
@@ -955,16 +950,18 @@ public class MainActivity extends AppCompatActivity {
             lp.addRule(RelativeLayout.BELOW, findViewById(R.id.Fuel).getId());
             lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
             lp.setMargins(25, 5, 25, 5);
-            speed.setLayoutParams(lp);
-            speed.getLayoutParams().width = (int) (width - 50);
+            rpm.setLayoutParams(lp);
+            rpm.getLayoutParams().height = height/2;
+            rpm.getLayoutParams().width = (int) (width);
 
             lp = new RelativeLayout.LayoutParams(width, width);
-            lp.addRule(RelativeLayout.BELOW, findViewById(R.id.GaugeSpeed).getId());
+            lp.addRule(RelativeLayout.BELOW, findViewById(R.id.GaugeRpm).getId());
             //lp.addRule(RelativeLayout.ABOVE,findViewById(R.id.info).getId());
             lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
             lp.setMargins(25, 5, 25, 5);
-            rpm.setLayoutParams(lp);
-            rpm.getLayoutParams().width = (int) (width - 50);
+            speed.setLayoutParams(lp);
+            speed.getLayoutParams().height = height/2;
+            speed.getLayoutParams().width = (int) (width);
         }
     }
 
@@ -1435,20 +1432,15 @@ public class MainActivity extends AppCompatActivity {
                 engineLoad.setText(Integer.toString(calcLoad) + " %");
                 mConversationArrayAdapter.add("Engine Load: " + Integer.toString(calcLoad) + " %");
 
-                String consumption = null;
+                double FuelFlowLH = (mMaf * calcLoad * mEnginedisplacement / 1000.0 / 714.0) + 0.8;
 
-                if (Enginetype == 0) {
-                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.3 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
-                    avgconsumption.add((0.001 * 0.004 * 4 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
+                if(calcLoad == 0)
+                    FuelFlowLH = 0;
 
-                } else if (Enginetype == 1) {
-                    consumption = String.format("%10.1f", (0.001 * 0.004 * 4.3 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20)).trim();
-                    avgconsumption.add((0.001 * 0.004 * 4 * 1.35 * Enginedisplacement * rpmval * 60 * calcLoad / 20));
+                avgconsumption.add(FuelFlowLH);
 
-                }
-                Fuel.setText(consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
-                mConversationArrayAdapter.add("Fuel Consumption: " + consumption + " - " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
-
+                Fuel.setText(String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
+                mConversationArrayAdapter.add("Fuel Consumption: " + String.format("%10.1f", calculateAverage(avgconsumption)).trim() + " l/h");
                 break;
 
             case 5://PID(05): Coolant Temperature
@@ -1500,9 +1492,9 @@ public class MainActivity extends AppCompatActivity {
 
                 // ((256*A)+B) / 100  [g/s]
                 val = ((256 * A) + B) / 100;
-                intval = (int) val;
+                mMaf = (int) val;
                 Maf.setText(Integer.toString(intval) + " g/s");
-                mConversationArrayAdapter.add("Maf Air Flow: " + Integer.toString(intval) + " g/s");
+                mConversationArrayAdapter.add("Maf Air Flow: " + Integer.toString(mMaf) + " g/s");
 
                 break;
 

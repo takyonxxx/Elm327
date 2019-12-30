@@ -10,15 +10,7 @@
 			android:inputType="number"
 			android:maxLength="4"
             android:key="Enginedisplacement" 
-            android:name="Enginedisplacement"/>         
-		<ListPreference
-            android:key="EngineType"
-            android:name="EngineType"
-            android:title="Engine Type"
-            android:summary="Define Engine Type"
-            android:defaultValue="0"
-            android:entries="@array/EngineType"
-            android:entryValues="@array/EngineTypeValues" />   
+            android:name="Enginedisplacement"/>
         <ListPreference
             android:key="FaceColor"
             android:name="FaceColor"

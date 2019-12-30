@@ -739,7 +739,7 @@ public class GaugeSpeed extends View {
 
 
     private void drawScale(final Canvas canvas) {
-        canvas.save(Canvas.MATRIX_SAVE_FLAG);
+        canvas.save();
         // On canvas, North is 0 degrees, East is 90 degrees, South is 180 etc.
         // We start the scale somewhere South-West so we need to first rotate the canvas.
         canvas.rotate(mScaleRotation, 0.5f, 0.5f);
@@ -827,7 +827,7 @@ public class GaugeSpeed extends View {
             final float angle = getAngleForValue(mCurrentValue);
             // Logger.log.info(String.format("value=%f -> angle=%f", mCurrentValue, angle));
 
-            canvas.save(Canvas.MATRIX_SAVE_FLAG);
+            canvas.save();
             canvas.rotate(angle, 0.5f, 0.5f);
 
             setNeedleShadowPosition(angle);
