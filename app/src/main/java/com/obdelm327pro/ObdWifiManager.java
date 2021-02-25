@@ -165,6 +165,7 @@ public class ObdWifiManager {
     public boolean connect() {
 
         setState(STATE_CONNECTING);
+        Log.d(TAG, "Conneting to wifi device...");
 
         if (mConnecting || isConnected()) {
             return false;
@@ -179,29 +180,14 @@ public class ObdWifiManager {
         WifiInfo wifiInfo = wifi.getConnectionInfo();
         String name = wifiInfo.getSSID();
 
-        if (wifi.isWifiEnabled() && (name.contains("OBD") || name.contains("obd") || name.contains("Obd") ||
-                name.contains("ELM") || name.contains("elm") || name.contains("Elm") ||
-                name.contains("ECU") || name.contains("ecu") || name.contains("Ecu") ||
-                name.contains("LINK") || name.contains("link") || name.contains("Link"))) {
-            mConnecting = true;
-            deviceName = name.replace("\"","");
+        Log.d(TAG, "Found wifi device : " + name);
 
-            mWIFIHandler.removeCallbacksAndMessages(null);
-            mWIFIHandler.post(mConnectRunnable);
+        mConnecting = true;
+        deviceName = name.replace("\"","");
 
-            return true;
-        }
-
-        Message msg = mWIFIHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
-        Bundle bundle = new Bundle();
-        bundle.putString(MainActivity.TOAST, "Unable to connect wifi device");
-        msg.setData(bundle);
-        mWIFIHandler.sendMessage(msg);
-
-        setState(STATE_NONE);
-
-        mConnecting = false;
-        return false;
+        mWIFIHandler.removeCallbacksAndMessages(null);
+        mWIFIHandler.post(mConnectRunnable);
+        return true;
     }
 
     public void disconnect() {

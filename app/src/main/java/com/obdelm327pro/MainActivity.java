@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.ActionBar;
@@ -112,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
     String VOLTAGE = "ATRV",
             PROTOCOL = "ATDP",
             RESET = "ATZ",
+            PIDS_SUPPORTED20 = "0100",
             ENGINE_COOLANT_TEMP = "0105",  //A-40
             ENGINE_RPM = "010C",  //((A*256)+B)/4
             ENGINE_LOAD = "0104",  // A*100/255
@@ -172,7 +174,6 @@ public class MainActivity extends AppCompatActivity {
                             tryconnect = false;
                             resetvalues();
                             sendEcuMessage(RESET);
-
                             break;
                         case ObdWifiManager.STATE_CONNECTING:
                             Status.setText(R.string.title_connecting);
@@ -184,7 +185,6 @@ public class MainActivity extends AppCompatActivity {
                             itemtemp.setTitle(R.string.connectwifi);
                             if (mWifiService != null)mWifiService.disconnect();
                             mWifiService = null;
-
                             resetvalues();
                             break;
                     }
@@ -397,6 +397,9 @@ public class MainActivity extends AppCompatActivity {
         }
         appbar = (AppBarLayout) findViewById(R.id.appbar);
 
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "My Tag");
         wl.acquire();
@@ -452,7 +455,7 @@ public class MainActivity extends AppCompatActivity {
         //ATSTFF Set time out to maximum
         //ATSTHH Set timeout to 4ms
 
-        initializeCommands = new String[]{"ATZ", "ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "ATSP0"};
+        initializeCommands = new String[]{"ATL0", "ATE1", "ATH1", "ATAT1", "ATSTFF", "ATI", "ATDP", "ATSP0", "0100"};
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -1008,8 +1011,6 @@ public class MainActivity extends AppCompatActivity {
         mConversationArrayAdapter.clear();
 
         resetgauges();
-
-        sendEcuMessage(RESET);
     }
 
     private void connectDevice(Intent data) {
@@ -1047,6 +1048,7 @@ public class MainActivity extends AppCompatActivity {
                         mWifiService.write(send);
                     }
                 } catch (Exception e) {
+                    Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
                 }
             }
         }

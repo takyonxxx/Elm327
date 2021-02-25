@@ -293,19 +293,20 @@
 
         <EditText
             android:id="@+id/edit_text_out"
-            android:imeOptions="flagNoExtractUi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/button_send"
             android:layout_alignBottom="@+id/button_send"
             android:layout_alignParentLeft="true"
-            android:inputType="textShortMessage|textMultiLine"
-            android:maxLines="4"
-            android:textSize="14sp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="5dp"
+            android:layout_toLeftOf="@+id/button_send"
+            android:imeOptions="flagNoExtractUi"
+            android:inputType="textShortMessage|textMultiLine"
+            android:maxLines="4"
+            android:text="atrv"
             android:textColor="#FFF"
-            android:layout_toLeftOf="@+id/button_send"/>
+            android:textSize="14sp" />
 
     </RelativeLayout>
 
