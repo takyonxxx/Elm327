@@ -1,5 +1,6 @@
 package com.obdelm327pro;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -14,11 +15,6 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.support.design.widget.AppBarLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -36,6 +32,12 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.material.appbar.AppBarLayout;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -385,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
         return true ? hexDigitsCount == text.length() : false;
     }
 
+    @SuppressLint("InvalidWakeLockTag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -402,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "My Tag");
-        wl.acquire();
+        wl.acquire(10*60*1000L /*10 minutes*/);
 
         getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
@@ -541,12 +544,14 @@ public class MainActivity extends AppCompatActivity {
                     RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) Status.getLayoutParams();
                     if (actionbar) {
                         //toolbar.setVisibility(View.GONE);
+                        assert actionBar != null;
                         actionBar.hide();
                         actionbar = false;
 
                         lp.setMargins(0, 5, 0, 0);
                     } else {
                         //toolbar.setVisibility(View.VISIBLE);
+                        assert actionBar != null;
                         actionBar.show();
                         actionbar = true;
                         lp.setMargins(0, 0, 0, 0);
